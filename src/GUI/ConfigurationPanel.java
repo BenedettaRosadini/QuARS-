@@ -188,17 +188,17 @@ public class ConfigurationPanel  implements  ActionListener{
 		    try 
 		    {
 		    	 error = 0 ;
-		    	 int lengththres = 60;
-		    	 int anaphoric = 5;
-	        	 int coordination = 5;
-	        	 int passiveverbs = 5;
-	        	 int adverbs = 5;
-	        	 int vagueness = 5;
-	        	 int excessiveLength = 5;
-	        	 int unknownreference = 5;
-	        	 int unknownacronyms = 5;
-	        	 int missingrequirement = 5;
-	        	 int missingMesure = 5;
+		    	 int lengththres = 0;
+		    	 int anaphoric = 0;
+	        	 int coordination = 0;
+	        	 int passiveverbs = 0;
+	        	 int adverbs = 0;
+	        	 int vagueness = 0;
+	        	 int excessiveLength = 0;
+	        	 int unknownreference = 0;
+	        	 int unknownacronyms = 0;
+	        	 int missingrequirement = 0;
+	        	 int missingMesure = 0;
 	        	 String anaphoricext = anaphoricText.getText();
 	        	 String coordinationext =  coordinationText.getText();
 	        	 String passiveverbsext = passivetext.getText();
@@ -214,7 +214,7 @@ public class ConfigurationPanel  implements  ActionListener{
 	        	 if(!anaphoricext.isEmpty())
 	        	 {
 	        		 anaphoric = Integer.parseInt(anaphoricext);
-	        		 if(anaphoric > 10 )
+	        		 if(anaphoric > 10 ||  anaphoric < 0)
 	        		 {
 	        			 JFrame f = null;
 	        		     JOptionPane.showMessageDialog(f,
@@ -228,7 +228,7 @@ public class ConfigurationPanel  implements  ActionListener{
 	        	 if(!coordinationext.isEmpty())
 	        	 {
 	        		 coordination = Integer.parseInt(coordinationext);
-	        		 if(coordination > 10 )
+	        		 if(coordination > 10 || coordination < 0)
 	        		 {
 	        			 JFrame f = null;
 	        		     JOptionPane.showMessageDialog(f,
@@ -242,7 +242,7 @@ public class ConfigurationPanel  implements  ActionListener{
 	        	 if(!passiveverbsext.isEmpty())
 	        	 {
 	        		 passiveverbs = Integer.parseInt(passiveverbsext);
-	        		 if(passiveverbs > 10 )
+	        		 if(passiveverbs > 10 || passiveverbs < 0 )
 	        		 {
 	        			 JFrame f = null;
 	        		     JOptionPane.showMessageDialog(f,
@@ -257,7 +257,7 @@ public class ConfigurationPanel  implements  ActionListener{
 	        	 if(!adverbsext.isEmpty())
 	        	 {
 	        		 adverbs = Integer.parseInt(adverbsext);
-	        		 if(adverbs > 10 )
+	        		 if(adverbs > 10 || adverbs < 0 )
 	        		 {
 	        			 JFrame f = null;
 	        		     JOptionPane.showMessageDialog(f,
@@ -363,11 +363,57 @@ public class ConfigurationPanel  implements  ActionListener{
 	        		 lengththres = Integer.parseInt(lengththresext);
 	        		
 	        	 }
+		    	 
+		    	 if(lengththres == 0)
+		    	 {
+		    		 lengththres = 60;
+		    	 }
+		    	 if(anaphoric == 0)
+		    	 {
+		    		 anaphoric = 5;
+		    	 }
+		    	 if(coordination == 0)
+		    	 {
+		    		 coordination = 5;
+		    	 }
+		    	 if(passiveverbs == 0)
+		    	 {
+		    		 passiveverbs = 5;
+		    	 }
+		    	 if(adverbs == 0)
+		    	 {
+		    		 adverbs = 5;
+		    	 }
+		    	 if(vagueness == 0)
+		    	 {
+		    		 vagueness = 5;
+		    	 }
+		    	 if(excessiveLength == 0)
+		    	 {
+		    		 excessiveLength = 5;
+		    	 }
+		    	 if(unknownreference == 0)
+		    	 {
+		    		 unknownreference = 5;
+		    	 }
+		    	 if(unknownacronyms == 0)
+		    	 {
+		    		 unknownacronyms = 5;
+		    	 }
+		    	 if(missingrequirement == 0)
+		    	 {
+		    		 missingrequirement = 5;
+		    	 }
+		    	 if(missingMesure == 0)
+		    	 {
+		    		 missingMesure = 5;
+		    	 }
+
 	        	if(error == 0){
 	        		JFrame f = null;
 	        		JOptionPane.showMessageDialog(f,
 	        			    "Configuration Successfully acquired.");
-	        	
+	        		
 	        		mainFrame.setVisible(false);
 	        		toolConf.setLengththres(lengththres);
 	        		toolConf.setAdverbs(adverbs);
@@ -394,6 +440,8 @@ public class ConfigurationPanel  implements  ActionListener{
 		    }
 	  }
    	}
+   	 
+   	
 }
 	
 	
