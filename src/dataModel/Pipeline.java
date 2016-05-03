@@ -8,12 +8,14 @@ public class Pipeline {
 	private ArrayList<String> Jape_Path;
 	private String Path;
 	private String annotation;
-	public Pipeline(boolean specific, String name, String annotation)
+	private int rank;
+	public Pipeline(boolean specific, String name, String annotation, int rank)
 	{
 		this.specific= specific;
 		Jape_Path = new ArrayList<String>();
 		this.Path=name;
 		this.annotation = annotation;
+		this.rank = rank;
 	}
 
 	public void setSpecific(boolean specific) {
@@ -46,5 +48,13 @@ public class Pipeline {
 
 	public void setAnnotation(String annotation) {
 		this.annotation = annotation;
+	}
+
+	public int getRank() {
+		return rank;
+	}
+
+	public void setRank(int rank) {
+		this.rank = rank;
 	}
 }
