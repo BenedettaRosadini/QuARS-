@@ -5,8 +5,17 @@ import gate.util.GateException;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Map;
+
+import javax.xml.stream.XMLStreamException;
+
+import org.apache.poi.EncryptedDocumentException;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+
+import GUI.ReportTable;
 
 public class DocumentAnalyzer {
 
@@ -16,6 +25,7 @@ public class DocumentAnalyzer {
 	private RequirementDocumentManager extractreq;
 	private ArrayList<Indicator> indicator_list;
 	private ArrayList<Pipeline> pipelineElement;
+	private  ArrayList<Annotations> ann_list = new ArrayList<Annotations>();
 	private Configuration conf ;
 	public DocumentAnalyzer(Configuration conf){	
 		indicator_list = new ArrayList<Indicator>();
@@ -34,13 +44,23 @@ public class DocumentAnalyzer {
 	}
 	
 	//Run Pipeline
-	public void Run() throws IOException, GateException{
+	public ArrayList<Annotations> Run() throws IOException, GateException, XMLStreamException{
 		this.ExtractRequirements();
 		this.resetPipelines();
 		this.ConfigurePipelines();
 		this.readPipelineList();
 		GateInterface gi = new GateInterface();
 		gi.runPipeline(this.pipelineElement, this.Corpora);
+		ann_list = gi.getAnn();
+//  	Iterator <Annotations> it = ann_list.iterator();
+//		while(it.hasNext())
+//		{
+//			Annotations ann = it.next();
+//			System.out.println("Text: "+ann.getDefect());
+//			System.out.println("Defect: "+ann.getIndicator());
+//			System.out.println("Defect: "+ann.getRank());
+//		}
+		return ann_list;
 	}
 
 	public Document getDocument() {
@@ -73,7 +93,7 @@ public class DocumentAnalyzer {
 		if(conf.isAnaphoric() == true)
 		{
 			File directory = new File(System.getProperty("user.dir")+File.separator+"jape"+File.separator+"anaphoric");
-			Pipeline pipeline = new Pipeline(false, "Anaphoric", "AnaphoricAmbiguity");
+			Pipeline pipeline = new Pipeline(false, "Anaphoric", "AnaphoricAmbiguity", conf.getAnaphoric_rank());
 			File[] list = directory.listFiles();
 			for(int i = 0; i < list.length;i++)
 			{
@@ -88,7 +108,7 @@ public class DocumentAnalyzer {
 		if(conf.isCoordination() == true)
 		{
 			File directory = new File(System.getProperty("user.dir")+File.separator+"jape"+File.separator+"coordination");
-			Pipeline pipeline = new Pipeline(false, "Coordination", "CoordAmbiguity");
+			Pipeline pipeline = new Pipeline(false, "Coordination", "CoordAmbiguity", conf.getCoordination_rank());
 			File[] list = directory.listFiles();
 			for(int i = 0; i < list.length;i++)
 			{
@@ -104,7 +124,7 @@ public class DocumentAnalyzer {
 		{
 		
 			File directory = new File(System.getProperty("user.dir")+File.separator+"jape"+File.separator+"passive_verb");
-			Pipeline pipeline = new Pipeline(false, "Passiveverbs","Passive");
+			Pipeline pipeline = new Pipeline(false, "PassiveVerbs","Passive", conf.getPassiveverbs_rank());
 			File[] list = directory.listFiles();
 			for(int i = 0; i < list.length;i++)
 			{
@@ -120,7 +140,7 @@ public class DocumentAnalyzer {
 		{                                                                                                                 
 		                                                                                                                  
 			File directory = new File(System.getProperty("user.dir")+File.separator+"jape"+File.separator+"adverbs");
-			Pipeline pipeline = new Pipeline(false, "Adverbs","Adverbs_detected");                                                                      
+			Pipeline pipeline = new Pipeline(false, "Adverbs","Adverbs_detected", conf.getAdverbs_rank());                                                                      
 			File[] list = directory.listFiles();                                                                          
 			for(int i = 0; i < list.length;i++)                                                                           
 			{                                                                                                             
@@ -136,7 +156,7 @@ public class DocumentAnalyzer {
 		{                                                                                                                 
 		                                                                                                                  
 			File directory = new File(System.getProperty("user.dir")+File.separator+"jape"+File.separator+"Length");
-			Pipeline pipeline = new Pipeline(true, "ExcessiveLength","Excessive_length_token");                                                                      
+			Pipeline pipeline = new Pipeline(true, "ExcessiveLength","Excessive_length_token", conf.getExcessiveLength_rank());                                                                      
 			File[] list = directory.listFiles();                                                                          
 			for(int i = 0; i < list.length;i++)                                                                           
 			{                                                                                                             
@@ -152,7 +172,7 @@ public class DocumentAnalyzer {
 		{                                                                                                                 
 		                                                                                                                  
 			File directory = new File(System.getProperty("user.dir")+File.separator+"jape"+File.separator+"acronyms");
-			Pipeline pipeline = new Pipeline(false, "Unknownacronyms", "Unknownacronyms");                                                                      
+			Pipeline pipeline = new Pipeline(false, "UnknownAcronyms", "Unknownacronyms", conf.getUnknownacronyms_rank());                                                                      
 			File[] list = directory.listFiles();                                                                          
 			for(int i = 0; i < list.length;i++)                                                                           
 			{                                                                                                             
@@ -168,7 +188,7 @@ public class DocumentAnalyzer {
 		{                                                                                                                 
 		                                                                                                                  
 			File directory = new File(System.getProperty("user.dir")+File.separator+"jape"+File.separator+"Missingrequirement");
-			Pipeline pipeline = new Pipeline(false, "Missingrequirement","MissingElse");                                                                      
+			Pipeline pipeline = new Pipeline(false, "MissingRequirement","MissingElse", conf.getMissingrequirement_rank());                                                                      
 			File[] list = directory.listFiles();                                                                          
 			for(int i = 0; i < list.length;i++)                                                                           
 			{                                                                                                             
@@ -184,7 +204,7 @@ public class DocumentAnalyzer {
 		{                                                                                                                 
 		                                                                                                                  
 			File directory = new File(System.getProperty("user.dir")+File.separator+"jape"+File.separator+"Missingrequirement");
-			Pipeline pipeline = new Pipeline(false, "MissingMeasure", "MissingUnit");                                                                      
+			Pipeline pipeline = new Pipeline(false, "MissingMeasure", "MissingUnit", conf.getMissingMeasure_rank());                                                                      
 			File[] list = directory.listFiles();                                                                          
 			for(int i = 0; i < list.length;i++)                                                                           
 			{                                                                                                             
@@ -201,7 +221,7 @@ public class DocumentAnalyzer {
 		{                                                                                                                 
 		                                                                                                                  
 			File directory = new File(System.getProperty("user.dir")+File.separator+"jape"+File.separator+"vagueness");
-			Pipeline pipeline = new Pipeline(false,"isVagueness", "Vagueness" );                                                                      
+			Pipeline pipeline = new Pipeline(false,"Vagueness", "Vagueness", conf.getVagueness_rank() );                                                                      
 			File[] list = directory.listFiles();                                                                          
 			for(int i = 0; i < list.length;i++)                                                                           
 			{                                                                                                             
@@ -216,7 +236,7 @@ public class DocumentAnalyzer {
 		{                                                                                                                 
 		                                                                                                                  
 			File directory = new File(System.getProperty("user.dir")+File.separator+"jape"+File.separator+"MissingReference");
-			Pipeline pipeline = new Pipeline(false, "Unknownreference", "MissingReference");                                                                      
+			Pipeline pipeline = new Pipeline(false, "UnknownReference", "MissingReference", conf.getMissingrequirement_rank());                                                                      
 			File[] list = directory.listFiles();                                                                          
 			for(int i = 0; i < list.length;i++)                                                                           
 			{                                                                                                             
@@ -261,4 +281,19 @@ public class DocumentAnalyzer {
 		}
 	}
 
+
+	public ArrayList<Annotations> getAnn_list() {
+		return ann_list;
+	}
+
+
+	public void setAnn_list(ArrayList<Annotations> ann_list) {
+		this.ann_list = ann_list;
+	}
+	
+
+	public String GenerateReport(ArrayList<ReportTable> clarity_defect, ArrayList<ReportTable> nonambiguity_defect, ArrayList<ReportTable> completeness_defect) throws EncryptedDocumentException, InvalidFormatException, IOException
+	{
+		return this.extractreq.Report(clarity_defect,nonambiguity_defect, completeness_defect);
+	}
 }
