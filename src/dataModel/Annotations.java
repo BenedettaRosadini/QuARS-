@@ -4,26 +4,79 @@ import javax.swing.JTextArea;
 
 public class Annotations {
 	
-	public Annotations(String indicator, String defect, int rank) {
+	public Annotations(String indicator, String text, int rank, String defect) {
 		super();
 		Indicator = indicator;
-		this.text = defect;
+		this.text = text;
 		this.rank = rank;
+		this.defect = defect;
+		if(this.Indicator.equals("AnaphoricAmbiguity"))
+		{
+			this.Explanation =  "Anaphoric Ambiguity: \""+this.defect+"\" refers to a previous part of the text";
+		}
+		if(this.Indicator.equals("CoordAmbiguity"))
+		{
+			this.Explanation =  "\""+this.defect+"\" Coordination Ambiguity:  too much coordinating conjunction  are present in the requirement.";
+		}
+		if(this.Indicator.equals("Vagueness"))
+		{
+			this.Explanation =  "\""+this.defect+"\" is a vague term.";
+		}
+		if(this.Indicator.equals("Excessive_length_phrase"))
+		{
+			this.Explanation =  "Too long requirement.";
+		}
+		if(this.Indicator.equals("Adverbs_detected"))
+		{
+			this.Explanation =  "Modal adverbs should not be used.";
+		}
+		if(this.Indicator.equals("Passive"))
+		{
+			this.Explanation =  "Passive Verbs should not be used.";
+		}
+		if(this.Indicator.equals("Unknownacronyms"))
+		{
+			this.Explanation =  "Unknown Acronyms present in the requirement please check.";
+		}
+		if(this.Indicator.equals("Missing Requirement"))
+		{
+			this.Explanation =  "Else condition missing.";
+		}
+		if(this.Indicator.equals("MissingMeasure"))
+		{
+			this.Explanation =  "Missing Unit of Measure.";
+		}
+		if(this.Indicator.equals("MissingReference"))
+		{
+			this.Explanation =  "Unknown Reference present in the requirement please check.";
+		}
+		
+		
+	}
+	
+	public Annotations(String indicator, String text, int rank) {
+		super();
+		Indicator = indicator;
+		this.text = text;
+		this.rank = rank;
+	
 	}
 	private String Indicator;
 	private String text;
 	private int rank;
-	JTextArea jt;
+	private String defect;
+	private String Explanation;
+
 	public String getIndicator() {
 		return Indicator;
 	}
 	public void setIndicator(String indicator) {
 		Indicator = indicator;
 	}
-	public String getDefect() {
+	public String getText() {
 		return text;
 	}
-	public void setDefect(String defect) {
+	public void setText(String defect) {
 		this.text = defect;
 	}
 	public int getRank() {
@@ -32,12 +85,7 @@ public class Annotations {
 	public void setRank(int rank) {
 		this.rank = rank;
 	}
-	public JTextArea getJt() {
-		return jt;
-	}
-	public void setJt(JTextArea jt) {
-		this.jt = jt;
-	}
+
 	
 	public String getIndicatorName() {
 		String res = null;
@@ -53,7 +101,7 @@ public class Annotations {
 		{
 			res = "Vagueness";
 		}
-		if(this.Indicator.equals("Excessive_length_token"))
+		if(this.Indicator.equals("Excessive_length_phrase"))
 		{
 			res = "Excessive Length";
 		}
@@ -83,6 +131,20 @@ public class Annotations {
 		}
 
 		return res;
+	}
+	public String getDefect() {
+		return defect;
+	}
+	public void setDefect(String defect) {
+		this.defect = defect;
+	}
+
+	public String getExplanation() {
+		return Explanation;
+	}
+
+	public void setExplanation(String explanation) {
+		Explanation = explanation;
 	}
 
 }

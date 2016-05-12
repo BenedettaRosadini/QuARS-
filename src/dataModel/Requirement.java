@@ -11,14 +11,14 @@ public class Requirement {
 //		this.last_index = index;
 //		this.length = length;
 		this.result = "PASS";
-		annotation_list = new ArrayList <Annotation>();
+		annotation_list = new ArrayList <Annotations>();
 	}
 	private String ID;
 	private String text;
 	private String result;
 //	private long last_index;
 //	private long length;
-	private ArrayList <Annotation> annotation_list;
+	private ArrayList <Annotations> annotation_list;
 	public String getID() {
 		return ID;
 	}
@@ -43,11 +43,11 @@ public class Requirement {
 	public void setLength(int length) {
 		this.length = length;
 	}*/
-	public ArrayList<Annotation> getAnnotation_list() {
+	public ArrayList<Annotations> getAnnotation_list() {
 		return annotation_list;
 	}
 	
-	public void add_annotation(Annotation ann) {
+	public void add_annotation(Annotations ann) {
 		annotation_list.add(ann);
 	}
 	

@@ -26,6 +26,7 @@ public class DocumentAnalyzer {
 	private ArrayList<Indicator> indicator_list;
 	private ArrayList<Pipeline> pipelineElement;
 	private  ArrayList<Annotations> ann_list = new ArrayList<Annotations>();
+	private  ArrayList<Requirement> general_list = new ArrayList<Requirement>();
 	private Configuration conf ;
 	public DocumentAnalyzer(Configuration conf){	
 		indicator_list = new ArrayList<Indicator>();
@@ -40,6 +41,7 @@ public class DocumentAnalyzer {
 		Map<String,Requirement> Requirements_list;	
 		Requirements_list = extractreq.ExtractRequirements(this.conf.getDocumentPath());
 		Document document = new Document(Requirements_list);
+		this.setDocument(document);
 		this.Corpora = this.extractreq.getCorpora();
 	}
 	
@@ -52,20 +54,32 @@ public class DocumentAnalyzer {
 		GateInterface gi = new GateInterface();
 		gi.runPipeline(this.pipelineElement, this.Corpora);
 		ann_list = gi.getAnn();
-//  	Iterator <Annotations> it = ann_list.iterator();
-//		while(it.hasNext())
-//		{
-//			Annotations ann = it.next();
-//			System.out.println("Text: "+ann.getDefect());
-//			System.out.println("Defect: "+ann.getIndicator());
-//			System.out.println("Defect: "+ann.getRank());
-//		}
+		Iterator <Annotations> it = ann_list.iterator();
+		while(it.hasNext())
+		{
+			Annotations cc = it.next();
+			//System.out.println("***"+cc.getText());
+			this.Document.evaluate_req(cc);			
+		}
+		System.out.println("ann_list obtained");
+		this.Document.evaluate();
+		System.out.println("document evaluate");
 		return ann_list;
+	}
+	
+	public ArrayList<AnnotationGeneral> RunGeneral(){
+		System.out.println("run general");
+		ArrayList<AnnotationGeneral> ann_gen = new ArrayList<AnnotationGeneral>();
+		ann_gen = this.Document.CreateGeneral();
+		System.out.println("ann general");
+		return ann_gen;
 	}
 
 	public Document getDocument() {
 		return Document;
 	}
+	
+
 
 	public ArrayList<Indicator> getIndicator_list() {
 		return indicator_list;
@@ -156,7 +170,7 @@ public class DocumentAnalyzer {
 		{                                                                                                                 
 		                                                                                                                  
 			File directory = new File(System.getProperty("user.dir")+File.separator+"jape"+File.separator+"Length");
-			Pipeline pipeline = new Pipeline(true, "ExcessiveLength","Excessive_length_token", conf.getExcessiveLength_rank());                                                                      
+			Pipeline pipeline = new Pipeline(true, "ExcessiveLength","Excessive_length_phrase", conf.getExcessiveLength_rank());                                                                      
 			File[] list = directory.listFiles();                                                                          
 			for(int i = 0; i < list.length;i++)                                                                           
 			{                                                                                                             
@@ -292,8 +306,18 @@ public class DocumentAnalyzer {
 	}
 	
 
-	public String GenerateReport(ArrayList<ReportTable> clarity_defect, ArrayList<ReportTable> nonambiguity_defect, ArrayList<ReportTable> completeness_defect) throws EncryptedDocumentException, InvalidFormatException, IOException
+	public String GenerateReport(ArrayList<ReportTable> clarity_defect, ArrayList<ReportTable> nonambiguity_defect, ArrayList<ReportTable> completeness_defect,ArrayList<ReportTable> general_defect) throws EncryptedDocumentException, InvalidFormatException, IOException
 	{
-		return this.extractreq.Report(clarity_defect,nonambiguity_defect, completeness_defect);
+		return this.extractreq.Report(clarity_defect,nonambiguity_defect, completeness_defect,general_defect);
+	}
+	
+	public String GenerateReportAll(ArrayList<ReportTable> clarity_defect, ArrayList<ReportTable> nonambiguity_defect, ArrayList<ReportTable> completeness_defect,ArrayList<ReportTable>general_defect) throws EncryptedDocumentException, InvalidFormatException, IOException
+	{
+		return this.extractreq.ReportAll(clarity_defect,nonambiguity_defect, completeness_defect,general_defect);
+	}
+
+
+	public void setDocument(Document document) {
+		Document = document;
 	}
 }

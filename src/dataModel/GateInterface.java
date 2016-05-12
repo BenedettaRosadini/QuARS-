@@ -36,6 +36,9 @@ import java.util.Properties;
 
 
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
@@ -124,7 +127,7 @@ public class GateInterface {
 			pipeline.execute();
 			System.out.println("Found annotations of the following types: " +
 			          doc.getAnnotations().getAllTypes());
-			
+			//System.out.println("*****"+pipe.getAnnotation());
 			for(corpIterator = corpus.iterator(); corpIterator.hasNext();){
 				
 				
@@ -132,14 +135,16 @@ public class GateInterface {
 				// getting default set of annotations 
 				AnnotationSet defaultSet = corpDoc.getAnnotations();
 				// get annotations of type COL_NAME and VALUES from default annotation set
-				//AnnotationSet annotations = defaultSet.get(pipe.getAnnotation());
-				 new_name="Annotation"+File.separator+pipe.getAnnotation()+".xml";
-				 System.out.println(defaultSet.get(pipe.getAnnotation()).size());
+				AnnotationSet annotations = defaultSet.get(pipe.getAnnotation());
+				new_name="Annotation"+File.separator+pipe.getAnnotation()+".xml";
+			
+				// System.out.println(gate.Utils.stringFor(doc, annotations));
 				 File outputFile = new File(new_name);
 		         DocumentStaxUtils.writeDocument(doc, outputFile);
 		         FileUtils.write(outputFile,doc.toXml(doc.getAnnotations().get(pipe.getAnnotation()), true));
 				//System.out.println(gate.Utils.stringFor(doc, defaultSet));
 		         extract_requirement(new_name, pipe.getAnnotation(), pipe.getRank());
+		         System.out.println("****"+ann_list.size());
 			}
 			
 			Factory.deleteResource(doc);
@@ -155,9 +160,8 @@ public class GateInterface {
 		
 	}
 	
-	public void extract_requirement(String name, String annotation, int rank){
-		
-		
+	public void extract_requirement(String name, String annotation, int rank)
+	{		
 		File filename = new File(name);
 		  
 	   if (filename.isFile()) 
@@ -179,16 +183,32 @@ public class GateInterface {
 			   req=req.replaceAll("&lt;", "<");
 			   req=req.replaceAll("&gt;", ">");
 			   String [] ann = req.split("</requirement>");
+			   String regular = null;
 			   for(int i = 0; i < ann.length ; ++i)
 			   {
 				   ann[i]=ann[i].replace("<requirement>", "");
 				  
 				   if(ann[i].contains(annotation))
 				   {
-					   //System.out.println("**"+ann[i]);
+					  
 					   ann[i]= ann[i].replaceAll("[\r\n]", "");
-					   Annotations a = new Annotations(annotation, ann[i], rank);
-					   ann_list.add(a);
+//					   System.out.println(ann[i]);
+//					   System.out.println("******************");
+					   if(annotation.equals("Excessive_length_phrase"))
+					   {
+						   String []list = ann[i].split("[<>]");
+//						   for(int j= 0; j < list.length ; ++j)
+//						   {
+//							   System.out.println("**"+list[j]);
+//						   } 
+						   Annotations a = new Annotations(annotation, list[2], rank, list[2]);
+						   ann_list.add(a);
+					   }else
+					   {
+						   extractInformation(ann[i], annotation, rank); 
+						   System.out.println("****"+ann_list.size());
+					   }
+					   
 				   }
 			   }
 			   
@@ -207,6 +227,46 @@ public class GateInterface {
 
 	public static void setAnn(ArrayList<Annotations> ann) {
 		GateInterface.ann_list = ann;
+	}
+	
+	
+	public void extractInformation(String info, String annotation, int rank)
+	{
+	   if(!annotation.equals("Excessive_length_phrase"))
+	   {
+		   String regular = null ;
+		   String text = info;
+		  // System.out.println("+++++"+info);
+		   String regex = "<"+annotation+".*>.*</"+annotation+">";
+		   Pattern pattern = Pattern.compile(regex);
+		   Matcher matcher = pattern.matcher(info);
+		   while (matcher.find())
+		   {
+			   regular = matcher.group();
+			  
+		   }
+		   
+		   String []list = regular.split("[<>]");
+		   System.out.println(""+list.length);
+		   for(int i = 0; i < list.length ; ++i)
+		   {
+			   if(((i+1) %2)==0)
+			   {
+				   text = text.replace("<"+list[i]+">", "") ;
+			   }
+		   } 
+		   
+		   for(int i = 0; i < list.length ; ++i)
+		   {
+			   System.out.println("**"+list[i]);
+			   if(((i %2) == 0) && i!=0)
+			   {					   
+				   Annotations a = new Annotations(annotation, text, rank, list[i]);
+				   ann_list.add(a);
+			   }
+		   }
+		   System.out.println("**"+text);
+	   }
 	}
 	
 	
