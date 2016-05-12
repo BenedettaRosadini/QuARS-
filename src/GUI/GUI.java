@@ -1,6 +1,7 @@
 package GUI;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -12,7 +13,11 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
 
@@ -20,13 +25,20 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.TableModelListener;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
 
+import dataModel.AnnotationGeneral;
 import dataModel.Annotations;
 import dataModel.Configuration;
 import dataModel.DocumentAnalyzer;
 import dataModel.MyComparator;
+import dataModel.comparator_gen;
 import static javax.swing.GroupLayout.Alignment.*;
 
 import java.io.ByteArrayOutputStream;
@@ -34,11 +46,15 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.JTextArea;
 
 import org.apache.poi.EncryptedDocumentException;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
 
 public class GUI extends JFrame {
 	
@@ -72,21 +88,32 @@ public class GUI extends JFrame {
 	private DefaultTableModel Table_Completness_list;
 	private DefaultTableModel Table_Non_Ambiguity_list;
 	private DefaultTableModel Table_Clarity_list;
+	private DefaultTableModel Table_General_list;
 	private JTable Completeness_table;
 	private JTable NonAmbiguity_table;
 	private JTable Clarity_table;
+	private JTable General_table;
 	//data 
 	private ToolConfiguration toolconf = new ToolConfiguration();
 	private String DocPath = null;
 	private ArrayList<Annotations> clarity_list = new ArrayList<Annotations>();
 	private ArrayList<Annotations> completeness_list = new ArrayList<Annotations>();
 	private ArrayList<Annotations> nonambiguity_list = new ArrayList<Annotations>();
+	private ArrayList<Annotations> nonambiguity_General = new ArrayList<Annotations>();
 	
 	private ArrayList<ReportTable> clarity_defect = new ArrayList<ReportTable>();
 	private ArrayList<ReportTable> completeness_defect = new ArrayList<ReportTable>();
 	private ArrayList<ReportTable> nonambiguity_defect = new ArrayList<ReportTable>();
-    private DocumentAnalyzer da; 
+	private ArrayList<ReportTable> general_defect = new ArrayList<ReportTable>();
 	
+    private DocumentAnalyzer da; 
+    private ArrayList<String> highligth_clarity = new  ArrayList<String> ();
+    private ArrayList<String> highligth_completeness = new  ArrayList<String> ();
+    private ArrayList<String> highligth_nonambiguity = new  ArrayList<String> ();
+    private ArrayList<String> highligth_general = new  ArrayList<String> ();
+    private ArrayList<AnnotationGeneral> ann_general= new  ArrayList<AnnotationGeneral> ();
+    private File save_file;
+    
     public GUI() {
     	
     	
@@ -111,17 +138,17 @@ public class GUI extends JFrame {
                 KeyEvent.VK_T);
     	menuItemsave.setAccelerator(KeyStroke.getKeyStroke(
                   KeyEvent.VK_2, ActionEvent.ALT_MASK));
-    	menuItemsave.addActionListener(new MenuActionListener());
-    	menuItemsaveas = new JMenuItem("Save as",
-                KeyEvent.VK_T);
-    	menuItemsaveas.setAccelerator(KeyStroke.getKeyStroke(
-                  KeyEvent.VK_3, ActionEvent.ALT_MASK));
-    	menuItemsaveas.addActionListener(new MenuActionListener());
+    	menuItemsave.addActionListener(new SaveFileChooser());
+//    	menuItemsaveas = new JMenuItem("Save as",
+//                KeyEvent.VK_T);
+//    	menuItemsaveas.setAccelerator(KeyStroke.getKeyStroke(
+//                  KeyEvent.VK_3, ActionEvent.ALT_MASK));
+//    	menuItemsaveas.addActionListener(new MenuActionListener());
     	menuItemopen = new JMenuItem("Open",
                 KeyEvent.VK_T);
     	menuItemopen.setAccelerator(KeyStroke.getKeyStroke(
                   KeyEvent.VK_4, ActionEvent.ALT_MASK));
-    	menuItemopen.addActionListener(new MenuActionListener());
+    	menuItemopen.addActionListener(new OpenFileChooser());;
     	menuItemclose = new JMenuItem("Close",
                 KeyEvent.VK_T);
     	menuItemclose.setAccelerator(KeyStroke.getKeyStroke(
@@ -129,7 +156,7 @@ public class GUI extends JFrame {
     	menuItemclose.addActionListener(new MenuActionListener());
     	menu.add(menuItemnew);
     	menu.add(menuItemsave);
-    	menu.add(menuItemsaveas);
+    	//menu.add(menuItemsaveas);
     	menu.add(menuItemopen);
     	menu.add(menuItemclose);
     	
@@ -155,7 +182,7 @@ public class GUI extends JFrame {
     	JPanel Clarity = createClarityBox();
     	JPanel Completeness = createCompletenessBox();
     	//this.add(frame, BorderLayout.CENTER);
-        textArea = new JTextArea();
+        textArea = new JTextArea(2, 30);
         
         RunButton = new JButton("Run");
         RunButton.addActionListener(new RunProcedure());
@@ -220,7 +247,7 @@ public class GUI extends JFrame {
  
         setTitle("QuARS++");
         pack();
-        setSize(1300, 200);
+        setSize(1400, 200);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
     }
     
@@ -231,6 +258,7 @@ public class GUI extends JFrame {
     	Coordination=new JCheckBox("Coordination"); 
     	Coordination.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
     	JPanel panel = new JPanel();
+
     	panel.add(Anaphoric);
     	panel.add(Coordination);
     	panel.setBorder
@@ -289,7 +317,7 @@ public class GUI extends JFrame {
     {
     	
         JTabbedPane tabbedPane = new JTabbedPane();
-        ImageIcon icon = createImageIcon("images/middle.gif");
+        ImageIcon icon = new ImageIcon("images/middle.gif");
          
         JComponent panel1 = makeTextPanelCompleteness("Completeness");
         tabbedPane.addTab("Completeness", icon, panel1,
@@ -305,6 +333,11 @@ public class GUI extends JFrame {
         tabbedPane.addTab("Clarity", icon, panel3,
                 "Still does nothing");
         tabbedPane.setMnemonicAt(2, KeyEvent.VK_3);
+        
+        JComponent panel4= General("Ranked by Indicator");
+        tabbedPane.addTab("Ranked by Indicator", icon, panel4,
+                "Still does nothing");
+        tabbedPane.setMnemonicAt(3, KeyEvent.VK_3);
          
          
         //Add the tabbed pane to this panel.
@@ -318,12 +351,12 @@ public class GUI extends JFrame {
     
     protected JComponent makeTextPanelCompleteness(String text) {
         JPanel panel = new JPanel(false);       
-        Object[] columnHeaders = {"Requirement", "Type of Defect", "Relevance", "Not a Defect"};        
+        Object[] columnHeaders = {"Requirement", "Type of Defect", "Description","Relevance", "Not a Defect"};        
 
         
         Table_Completness_list = new DefaultTableModel() {
             Class[] types = {
-            		String.class, String.class, Integer.class,  Boolean.class
+            		String.class, String.class,String.class, Integer.class,  Boolean.class
 
             };
             // making sure that it returns boolean.class.   
@@ -334,8 +367,11 @@ public class GUI extends JFrame {
         };
 
         Table_Completness_list.setColumnIdentifiers(columnHeaders);
-        Completeness_table = new JTable(Table_Completness_list);  
-        Completeness_table.setRowHeight(30);
+        Completeness_table = new JTable(Table_Completness_list); 
+        Completeness_table.getColumnModel().getColumn(0).setCellRenderer(new MyCellRenderer_Completness());   
+        Completeness_table.getColumnModel().getColumn(2).setCellRenderer(new MyCellRenderer_Completness());  
+        Completeness_table.getColumnModel().getColumn(1).setCellRenderer(new MyCellRenderer_Completness());   
+
         panel.add(new JScrollPane(Completeness_table));
         panel.setLayout(new GridLayout(1, 1));
         return panel;
@@ -343,12 +379,12 @@ public class GUI extends JFrame {
     
     protected JComponent makeTextPanelNonAmbiguity(String text) {
     	JPanel panel = new JPanel(false);       
-        Object[] columnHeaders = {"Requirement", "Type of Defect", "Relevance", "Not a Defect"};        
+        Object[] columnHeaders = {"Requirement", "Type of Defect", "Description","Relevance", "Not a Defect"};        
 
         
          Table_Non_Ambiguity_list = new DefaultTableModel() {
             Class[] types = {
-            		String.class, String.class, Integer.class,  Boolean.class
+            		String.class, String.class, String.class, Integer.class,  Boolean.class
 
             };
             // making sure that it returns boolean.class.   
@@ -359,7 +395,9 @@ public class GUI extends JFrame {
         };
         Table_Non_Ambiguity_list.setColumnIdentifiers(columnHeaders);
         NonAmbiguity_table = new JTable(Table_Non_Ambiguity_list);   
-        NonAmbiguity_table.setRowHeight(30);        
+        NonAmbiguity_table.getColumnModel().getColumn(0).setCellRenderer(new MyCellRenderer_NonAmbiguity());       
+        NonAmbiguity_table.getColumnModel().getColumn(2).setCellRenderer(new MyCellRenderer_NonAmbiguity());   
+        NonAmbiguity_table.getColumnModel().getColumn(1).setCellRenderer(new MyCellRenderer_NonAmbiguity());   
         panel.add(new JScrollPane(NonAmbiguity_table));
         panel.setLayout(new GridLayout(1, 1));
         return panel;
@@ -368,10 +406,10 @@ public class GUI extends JFrame {
     
     protected JComponent Clarity(String text) {
     	JPanel panel = new JPanel(false);       
-        Object[] columnHeaders = {"Requirement", "Type of Defect", "Relevance", "Not a Defect"};        
+        Object[] columnHeaders = {"Requirement", "Type of Defect","Description", "Relevance", "Not a Defect"};        
     	Table_Clarity_list = new DefaultTableModel() {
              Class[] types = {
-             		String.class, String.class, Integer.class,  Boolean.class
+             		String.class, String.class, String.class, Integer.class,  Boolean.class
 
              };
              // making sure that it returns boolean.class.   
@@ -380,100 +418,454 @@ public class GUI extends JFrame {
                  return types[columnIndex];
              }
          };
-        Table_Clarity_list.setColumnIdentifiers(columnHeaders);
+        Table_Clarity_list.setColumnIdentifiers(columnHeaders);        
         Clarity_table = new JTable(Table_Clarity_list); 
-        Clarity_table.setRowHeight(30);
+        Clarity_table.getColumnModel().getColumn(0).setCellRenderer(new MyCellRenderer_Clarity());
+        Clarity_table.getColumnModel().getColumn(1).setCellRenderer(new MyCellRenderer_Clarity());
+        Clarity_table.getColumnModel().getColumn(2).setCellRenderer(new MyCellRenderer_Clarity());
+       
         panel.add(new JScrollPane(Clarity_table));
         panel.setLayout(new GridLayout(1, 1));
         return panel;
     }
-     
-    /** Returns an ImageIcon, or null if the path was invalid. */
-    protected static ImageIcon createImageIcon(String path) {
-        return new ImageIcon(path);
+    
+    
+    protected JComponent General(String text) {
+    	JPanel panel = new JPanel(false);       
+        Object[] columnHeaders = {"Requirement", "Type of Defect","Description", "Relevance", "Not a Defect"};        
+    	Table_General_list = new DefaultTableModel() {
+             Class[] types = {
+             		String.class, String.class, String.class, Integer.class,  Boolean.class
+
+             };
+             // making sure that it returns boolean.class.   
+             @Override
+             public Class getColumnClass(int columnIndex) {
+                 return types[columnIndex];
+             }
+         };
+        Table_General_list.setColumnIdentifiers(columnHeaders);        
+        General_table = new JTable(Table_General_list); 
+        General_table.getColumnModel().getColumn(0).setCellRenderer(new MyCellRenderer_General());
+        General_table.getColumnModel().getColumn(1).setCellRenderer(new MyCellRenderer_General());
+        General_table.getColumnModel().getColumn(2).setCellRenderer(new MyCellRenderer_General());
+       
+        panel.add(new JScrollPane(General_table));
+        panel.setLayout(new GridLayout(1, 1));
+        return panel;
     }
+    
+ public class MyCellRenderer_Clarity extends JTextArea implements TableCellRenderer {
+
+    	
+    	public MyCellRenderer_Clarity() {
+          setLineWrap(true);
+          setWrapStyleWord(true);
+       }
+
+		@Override
+		public Component getTableCellRendererComponent(JTable table,
+				Object value, boolean isSelected, boolean hasFocus, int row,
+				int column) {
+			// TODO Auto-generated method stub
+			setText( (String) value);//or something in value, like value.getNote()...
+			setSize(table.getColumnModel().getColumn(column).getWidth(),
+	                getPreferredSize().height);
+	        if (table.getRowHeight(row) != getPreferredSize().height) {
+	                table.setRowHeight(row, getPreferredSize().height);
+	        }
+	        Font f = new Font("TimesRoman", Font.PLAIN, 14);
+	        setFont(f);
+	        if (column == 1)
+	        {
+	        	f = new Font("TimesRoman", Font.BOLD, 14);
+	        	setFont(f);
+	        }
+	        if(column==0)
+	        {
+		        Iterator<String> it = highligth_clarity.iterator();
+		        while(it.hasNext())
+		        {
+		        	String a = it.next();
+		        	String string = value.toString();
+		        	if(string.contains(a)){
+	                    int indexOf = string.indexOf(a);
+	                    try {
+	                    	getHighlighter().addHighlight(indexOf,indexOf+a.length(),new javax.swing.text.DefaultHighlighter.DefaultHighlightPainter(Color.yellow));
+
+	                    } catch (BadLocationException e) {
+	                        e.printStackTrace();
+	                    }
+	                }
+		        }
+	        }
+	        return this;
+
+		}
+    }
+    
+    public class MyCellRenderer_General extends JTextArea implements TableCellRenderer {
+
+    	
+    	public MyCellRenderer_General() {
+          setLineWrap(true);
+          setWrapStyleWord(true);
+       }
+
+		@Override
+		public Component getTableCellRendererComponent(JTable table,
+				Object value, boolean isSelected, boolean hasFocus, int row,
+				int column) {
+			// TODO Auto-generated method stub
+			setText( (String) value);//or something in value, like value.getNote()...
+			setSize(table.getColumnModel().getColumn(column).getWidth(),
+	                getPreferredSize().height);
+	        if (table.getRowHeight(row) != getPreferredSize().height) {
+	                table.setRowHeight(row, getPreferredSize().height);
+	        }
+	        Font f = new Font("TimesRoman", Font.PLAIN, 14);
+	        setFont(f);
+	        if (column == 1)
+	        {
+	        	f = new Font("TimesRoman", Font.BOLD, 14);
+	        	setFont(f);
+	        }
+	        if(column==0)
+	        {
+		        Iterator<String> it = highligth_general.iterator();
+		        while(it.hasNext())
+		        {
+		        	String a = it.next();
+		        	String string = value.toString();
+		        	if(string.contains(a)){
+	                    int indexOf = string.indexOf(a);
+	                    try {
+	                    	getHighlighter().addHighlight(indexOf,indexOf+a.length(),new javax.swing.text.DefaultHighlighter.DefaultHighlightPainter(Color.yellow));
+
+	                    } catch (BadLocationException e) {
+	                        e.printStackTrace();
+	                    }
+	                }
+		        }
+	        }
+	        return this;
+
+		}
+    }
+    
+    
+   public class MyCellRenderer_NonAmbiguity extends JTextArea implements TableCellRenderer {
+
+    	
+    	public MyCellRenderer_NonAmbiguity() {
+          setLineWrap(true);
+          setWrapStyleWord(true);
+       }
+
+		@Override
+		public Component getTableCellRendererComponent(JTable table,
+				Object value, boolean isSelected, boolean hasFocus, int row,
+				int column) {
+			// TODO Auto-generated method stub
+			setText( (String) value);//or something in value, like value.getNote()...
+			setSize(table.getColumnModel().getColumn(column).getWidth(),
+	                getPreferredSize().height);
+	        if (table.getRowHeight(row) != getPreferredSize().height) {
+	                table.setRowHeight(row, getPreferredSize().height);
+	        }
+	        Font f = new Font("TimesRoman", Font.PLAIN, 14);
+	        setFont(f);
+	        if (column == 1)
+	        {
+	        	f = new Font("TimesRoman", Font.BOLD, 14);
+	        	setFont(f);
+	        }
+	        if(column==0)
+	        {
+		        Iterator<String> it = highligth_nonambiguity.iterator();
+		        while(it.hasNext())
+		        {
+		        	String a = it.next();
+		        	String string = value.toString();
+		        	if(string.contains(a)){
+	                    int indexOf = string.indexOf(a);
+	                    try {
+	                    	getHighlighter().addHighlight(indexOf,indexOf+a.length(),new javax.swing.text.DefaultHighlighter.DefaultHighlightPainter(Color.yellow));
+	
+	                    } catch (BadLocationException e) {
+	                        e.printStackTrace();
+	                    }
+	                }
+		        }
+	        }
+	        return this;
+	
+		}
+	}
+	
+public class MyCellRenderer_Completness extends JTextArea implements TableCellRenderer {
+
+	
+	public MyCellRenderer_Completness() {
+      setLineWrap(true);
+      setWrapStyleWord(true);
+   }
+
+	@Override	
+	public Component getTableCellRendererComponent(JTable table,
+			Object value, boolean isSelected, boolean hasFocus, int row,
+			int column) {
+		// TODO Auto-generated method stub
+		setText( (String) value);//or something in value, like value.getNote()...
+		setSize(table.getColumnModel().getColumn(column).getWidth(),
+	            getPreferredSize().height);
+	    if (table.getRowHeight(row) != getPreferredSize().height) {
+	            table.setRowHeight(row, getPreferredSize().height);
+	    }
+	    Font f = new Font("TimesRoman", Font.PLAIN, 14);
+	    setFont(f);
+	    if (column == 1)
+	    {
+	    	f = new Font("TimesRoman", Font.BOLD, 14);
+	    	setFont(f);
+	    }
+	    if(column==0)
+	    {
+	        Iterator<String> it = highligth_completeness.iterator();
+	        while(it.hasNext())
+	        {
+	        	String a = it.next();
+	        	String string = value.toString();
+	        	if(string.contains(a)){
+	                int indexOf = string.indexOf(a);
+	                try {
+	                	getHighlighter().addHighlight(indexOf,indexOf+a.length(),new javax.swing.text.DefaultHighlighter.DefaultHighlightPainter(Color.yellow));
+	
+	                } catch (BadLocationException e) {
+	                    e.printStackTrace();
+	                }
+	            }
+	        }
+	    }
+	    return this;
+	
+	}
+	}
+        
+    
     
     private class GenerateReport implements ActionListener {
    	 public void actionPerformed(ActionEvent e) 
    	 {
-   		 String text;
-   		 String indicator;
-   		 int rank;
-   		 boolean defect;
-   		 ReportTable report;
-   		 
-   		clarity_defect.clear();
-   		nonambiguity_defect.clear();
-   		completeness_defect.clear();
-   		
-   		if (Table_Clarity_list.getRowCount() > 0) {
-    	    for (int i = 0; i < Table_Clarity_list.getRowCount(); i++) {
-    	    	text = (String) Table_Clarity_list.getValueAt(i, 0);
-    	    	indicator = (String) Table_Clarity_list.getValueAt(i, 1);
-    	    	rank = (int) Table_Clarity_list.getValueAt(i, 2);
-    	    	defect = (boolean) Table_Clarity_list.getValueAt(i, 3);
-    	    	report = new ReportTable(text, indicator,rank,defect);
-    	    	clarity_defect.add(report);
-    	    }
-    	}
-   		if (Table_Non_Ambiguity_list.getRowCount() > 0) {
-    	    for (int i = 0; i < Table_Non_Ambiguity_list.getRowCount(); i++) {
-    	    	
-    	    	text = (String) Table_Non_Ambiguity_list.getValueAt(i, 0);
-    	    	indicator = (String) Table_Non_Ambiguity_list.getValueAt(i, 1);
-    	    	rank = (int) Table_Non_Ambiguity_list.getValueAt(i, 2);
-    	    	defect = (boolean) Table_Non_Ambiguity_list.getValueAt(i, 3);
-    	    	report = new ReportTable(text, indicator,rank,defect);
-    	    	nonambiguity_defect.add(report);
-    	    }
-    	}
-   		
-   		
-   		if (Table_Completness_list.getRowCount() > 0) {
-    	    for (int i = 0; i < Table_Completness_list.getRowCount(); i++) {
-    	    	
-    	    	text = (String) Table_Completness_list.getValueAt(i, 0);
-    	    	indicator = (String) Table_Completness_list.getValueAt(i, 1);
-    	    	rank = (int) Table_Completness_list.getValueAt(i, 2);
-    	    	defect = (boolean) Table_Completness_list.getValueAt(i, 3);
-    	    	report = new ReportTable(text, indicator,rank,defect);
-    	    	completeness_defect.add(report);
-    	    }
-    	}
-   		
-   		try {
-			String res = da.GenerateReport(clarity_defect, nonambiguity_defect, completeness_defect);
-			JFrame f = null;
-		     JOptionPane.showMessageDialog(f,
-		    		   "Report Correctly Generated!!! Path: "+res,
-		    		   "Report Generation",
-		    		   JOptionPane.INFORMATION_MESSAGE);
-		} catch (EncryptedDocumentException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-			JFrame f = null;
-		     JOptionPane.showMessageDialog(f,
-		    		    e1.toString(),
-		    		   "Error",
-		    		   JOptionPane.ERROR_MESSAGE);
+   		Object[] possibilities = {"Generate only Defect", "Generate All"};
+   		JFrame frame = null;
+   		 Icon icon = null;
+   		String s = (String)JOptionPane.showInputDialog(
+   		                    frame,
+   		                    "Select the type of Report\n",
+   		                    "Customized Dialog",
+   		                    JOptionPane.PLAIN_MESSAGE,
+   		                    icon,
+   		                    possibilities,
+   		                    "Generate only Defect");
 
-		} catch (InvalidFormatException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-			JFrame f = null;
-		     JOptionPane.showMessageDialog(f,
-		    		    e1.toString(),
-		    		   "Error",
-		    		   JOptionPane.ERROR_MESSAGE);
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-			JFrame f = null;
-		     JOptionPane.showMessageDialog(f,
-		    		    e1.toString(),
-		    		   "Error",
-		    		   JOptionPane.ERROR_MESSAGE);
-		}
+   		//If a string was returned, say so.
+   		if ((s != null) && (s.length() > 0)) {
+   		    if(s.equals("Generate only Defect"))
+   		    {
+   		    	 String text;
+	   	   		 String indicator;
+	   	   		 int rank;
+	   	   		 boolean defect;
+	   	   		 ReportTable report;
+	   	   		 String Description;
+	   	   		 
+	   	   		 clarity_defect.clear();
+	   	   		 nonambiguity_defect.clear();
+	   	   		 completeness_defect.clear();
+	   	   		
+	   	   		 if (Table_Clarity_list.getRowCount() > 0) {
+	   	    	    for (int i = 0; i < Table_Clarity_list.getRowCount(); i++) {
+	   	    	    	text = (String) Table_Clarity_list.getValueAt(i, 0);
+	   	    	    	indicator = (String) Table_Clarity_list.getValueAt(i, 1);
+	   	    	    	rank = (int) Table_Clarity_list.getValueAt(i, 3);
+	   	    	    	defect = (boolean) Table_Clarity_list.getValueAt(i, 4);
+	   	    	    	Description = (String) Table_Clarity_list.getValueAt(i, 2);
+	   	    	    	report = new ReportTable(text, indicator,rank,defect,Description);
+	   	    	    	clarity_defect.add(report);
+	   	    	    }
+	   	    	 }
+	   	   		 if (Table_Non_Ambiguity_list.getRowCount() > 0) {
+	   	    	    for (int i = 0; i < Table_Non_Ambiguity_list.getRowCount(); i++) {
+	   	    	    	
+	   	    	    	text = (String) Table_Non_Ambiguity_list.getValueAt(i, 0);
+	   	    	    	indicator = (String) Table_Non_Ambiguity_list.getValueAt(i, 1);
+	   	    	    	rank = (int) Table_Non_Ambiguity_list.getValueAt(i, 3);
+	   	    	    	defect = (boolean) Table_Non_Ambiguity_list.getValueAt(i, 4);
+	   	    	    	Description = (String) Table_Non_Ambiguity_list.getValueAt(i,2);
+	   	    	    	report = new ReportTable(text, indicator,rank,defect,Description);
+	   	    	    	nonambiguity_defect.add(report);
+	   	    	    }
+	   	    	 }
+	   	   		
+	   	   		
+	   	   		 if (Table_Completness_list.getRowCount() > 0) {
+	   	    	    for (int i = 0; i < Table_Completness_list.getRowCount(); i++) {
+	   	    	    	
+	   	    	    	text = (String) Table_Completness_list.getValueAt(i, 0);
+	   	    	    	indicator = (String) Table_Completness_list.getValueAt(i, 1);
+	   	    	    	rank = (int) Table_Completness_list.getValueAt(i, 3);
+	   	    	    	defect = (boolean) Table_Completness_list.getValueAt(i, 4);
+	   	    	    	Description = (String) Table_Completness_list.getValueAt(i, 2);
+	   	    	    	report = new ReportTable(text, indicator,rank,defect,Description);
+	   	    	    	completeness_defect.add(report);
+	   	    	    }
+	   	    	}
+	   	   		 
+	   	   	if (Table_General_list.getRowCount() > 0) {
+   	    	    for (int i = 0; i < Table_General_list.getRowCount(); i++) {
+   	    	    	
+   	    	    	text = (String) Table_General_list.getValueAt(i, 0);
+   	    	    	indicator = (String) Table_General_list.getValueAt(i, 1);
+   	    	    	rank = (int) Table_General_list.getValueAt(i, 3);
+   	    	    	defect = (boolean) Table_General_list.getValueAt(i, 4);
+   	    	    	Description = (String) Table_General_list.getValueAt(i, 2);
+   	    	    	report = new ReportTable(text, indicator,rank,defect,Description);
+   	    	    	general_defect.add(report);
+   	    	    }
+   	    	}
+	   	   		
+	   	   		 try {
+	   				String res = da.GenerateReport(clarity_defect, nonambiguity_defect, completeness_defect,general_defect);
+	   				JFrame f = null;
+	   			     JOptionPane.showMessageDialog(f,
+	   			    		   "Report Correctly Generated!!! Path: "+res,
+	   			    		   "Report Generation",
+	   			    		   JOptionPane.INFORMATION_MESSAGE);
+	   			 } catch (EncryptedDocumentException e1) {
+	   				// TODO Auto-generated catch block
+	   				e1.printStackTrace();
+	   				JFrame f = null;
+	   			     JOptionPane.showMessageDialog(f,
+	   			    		    e1.toString(),
+	   			    		   "Error",
+	   			    		   JOptionPane.ERROR_MESSAGE);
+	
+	   			 } catch (InvalidFormatException e1) {
+	   				// TODO Auto-generated catch block
+	   				e1.printStackTrace();
+	   				JFrame f = null;
+	   			     JOptionPane.showMessageDialog(f,
+	   			    		    e1.toString(),
+	   			    		   "Error",
+	   			    		   JOptionPane.ERROR_MESSAGE);
+	   			} catch (IOException e1) {
+	   				// TODO Auto-generated catch block
+	   				e1.printStackTrace();
+	   				JFrame f = null;
+	   			     JOptionPane.showMessageDialog(f,
+	   			    		    e1.toString(),
+	   			    		   "Error",
+	   			    		   JOptionPane.ERROR_MESSAGE);
+	   			}
+   		    }
+   		    else{
+ 		    	 String text;
+	   	   		 String indicator;
+	   	   		 int rank;
+	   	   		 boolean defect;
+	   	   		 ReportTable report;
+	   	   		 String Description;
+	   	   		 
+	   	   		 clarity_defect.clear();
+	   	   		 nonambiguity_defect.clear();
+	   	   		 completeness_defect.clear();
+	   	   		
+	   	   		 if (Table_Clarity_list.getRowCount() > 0) {
+	   	    	    for (int i = 0; i < Table_Clarity_list.getRowCount(); i++) {
+	   	    	    	text = (String) Table_Clarity_list.getValueAt(i, 0);
+	   	    	    	indicator = (String) Table_Clarity_list.getValueAt(i, 1);
+	   	    	    	rank = (int) Table_Clarity_list.getValueAt(i, 3);
+	   	    	    	defect = (boolean) Table_Clarity_list.getValueAt(i, 4);
+	   	    	    	Description = (String) Table_Clarity_list.getValueAt(i, 2);
+	   	    	    	report = new ReportTable(text, indicator,rank,defect,Description);
+	   	    	    	clarity_defect.add(report);
+	   	    	    }
+	   	    	 }
+	   	   		 if (Table_Non_Ambiguity_list.getRowCount() > 0) {
+	   	    	    for (int i = 0; i < Table_Non_Ambiguity_list.getRowCount(); i++) {
+	   	    	    	
+	   	    	    	text = (String) Table_Non_Ambiguity_list.getValueAt(i, 0);
+	   	    	    	indicator = (String) Table_Non_Ambiguity_list.getValueAt(i, 1);
+	   	    	    	rank = (int) Table_Non_Ambiguity_list.getValueAt(i, 3);
+	   	    	    	defect = (boolean) Table_Non_Ambiguity_list.getValueAt(i, 4);
+	   	    	    	Description = (String) Table_Non_Ambiguity_list.getValueAt(i,2);
+	   	    	    	report = new ReportTable(text, indicator,rank,defect,Description);
+	   	    	    	nonambiguity_defect.add(report);
+	   	    	    }
+	   	    	 }
+	   	   		
+	   	   		
+	   	   		 if (Table_Completness_list.getRowCount() > 0) {
+	   	    	    for (int i = 0; i < Table_Completness_list.getRowCount(); i++) {
+	   	    	    	
+	   	    	    	text = (String) Table_Completness_list.getValueAt(i, 0);
+	   	    	    	indicator = (String) Table_Completness_list.getValueAt(i, 1);
+	   	    	    	rank = (int) Table_Completness_list.getValueAt(i, 3);
+	   	    	    	defect = (boolean) Table_Completness_list.getValueAt(i, 4);
+	   	    	    	Description = (String) Table_Completness_list.getValueAt(i, 2);
+	   	    	    	report = new ReportTable(text, indicator,rank,defect,Description);
+	   	    	    	completeness_defect.add(report);
+	   	    	    }
+	   	    	}
+	   	   	if(Table_General_list.getRowCount() > 0) {
+   	    	    for (int i = 0; i < Table_General_list.getRowCount(); i++) {
+   	    	    	
+   	    	    	text = (String) Table_General_list.getValueAt(i, 0);
+   	    	    	indicator = (String) Table_General_list.getValueAt(i, 1);
+   	    	    	rank = (int) Table_General_list.getValueAt(i, 3);
+   	    	    	defect = (boolean) Table_General_list.getValueAt(i, 4);
+   	    	    	Description = (String) Table_General_list.getValueAt(i, 2);
+   	    	    	report = new ReportTable(text, indicator,rank,defect,Description);
+   	    	    	general_defect.add(report);
+   	    	    }
+	   	   	}
+	   	   		 try {
+	   				String res = da.GenerateReportAll(clarity_defect, nonambiguity_defect, completeness_defect, general_defect);
+	   				JFrame f = null;
+	   			     JOptionPane.showMessageDialog(f,
+	   			    		   "Report Correctly Generated!!! Path: "+res,
+	   			    		   "Report Generation",
+	   			    		   JOptionPane.INFORMATION_MESSAGE);
+	   			 } catch (EncryptedDocumentException e1) {
+	   				// TODO Auto-generated catch block
+	   				e1.printStackTrace();
+	   				JFrame f = null;
+	   			     JOptionPane.showMessageDialog(f,
+	   			    		    e1.toString(),
+	   			    		   "Error",
+	   			    		   JOptionPane.ERROR_MESSAGE);
+	
+	   			 } catch (InvalidFormatException e1) {
+	   				// TODO Auto-generated catch block
+	   				e1.printStackTrace();
+	   				JFrame f = null;
+	   			     JOptionPane.showMessageDialog(f,
+	   			    		    e1.toString(),
+	   			    		   "Error",
+	   			    		   JOptionPane.ERROR_MESSAGE);
+	   			} catch (IOException e1) {
+	   				// TODO Auto-generated catch block
+	   				e1.printStackTrace();
+	   				JFrame f = null;
+	   			     JOptionPane.showMessageDialog(f,
+	   			    		    e1.toString(),
+	   			    		   "Error",
+	   			    		   JOptionPane.ERROR_MESSAGE);
+	   			}
+   		    }
+   		}
+   		 
    		 	
       }
    }
@@ -495,10 +887,221 @@ public class GUI extends JFrame {
             int n = fileChooser.showOpenDialog(GUI.this);
             if (n == JFileChooser.APPROVE_OPTION) {
               File f = fileChooser.getSelectedFile();
-              System.out.println(f.getPath());
               textArea.append(f.getPath());
+              System.out.println(f.getPath());
+              if(f.getPath().contains(".txt"))
+              {
+                  setSize(1400, 700);
+              	  tab.setVisible(true);
+                  this.configuration(f); 
+              }
+
               }
           } catch (Exception ex) {}
+        }
+        
+        public void configuration(File file) throws IOException
+        {   
+        	if (Table_Non_Ambiguity_list.getRowCount() > 0) {
+        	    for (int i = Table_Non_Ambiguity_list.getRowCount() - 1; i > -1; i--) {
+        	    	Table_Non_Ambiguity_list.removeRow(i);
+        	    }
+        	}
+        	
+        	if (Table_Completness_list.getRowCount() > 0) {
+        	    for (int i = Table_Completness_list.getRowCount() - 1; i > -1; i--) {
+        	    	Table_Completness_list.removeRow(i);
+        	    }
+        	}
+        	
+        	if (Table_Clarity_list.getRowCount() > 0) {
+        	    for (int i = Table_Clarity_list.getRowCount() - 1; i > -1; i--) {
+        	    	Table_Clarity_list.removeRow(i);
+        	    }
+        	}
+        	if (Table_General_list.getRowCount() > 0) {
+        	    for (int i = Table_General_list.getRowCount() - 1; i > -1; i--) {
+        	    	Table_General_list.removeRow(i);
+        	    }
+        	}
+        	if(file.getName().contains(".txt") && file.isFile())
+        	{
+        		
+        		FileReader f;
+        	    f=new FileReader(file.getPath());
+        	    StringBuffer buffer = new StringBuffer();
+        	    BufferedReader b;
+        	    b=new BufferedReader(f);
+
+        	    String s;
+        	    while(true) 
+        	    {
+        	        s=b.readLine();
+        	        if(s==null)
+        	          break;
+        	        buffer.append(s+ "\n");
+        	    }
+        	   
+        	    
+        	    String Req =  buffer.toString();        	    
+     		    //System.out.println(Req);
+        	   
+        	  
+        	   extractClarity(Req);
+        	   extractNonAmbiguty(Req); 
+        	   extractCompleteness(Req);
+        	   extractGeneral(Req);
+        	   b.close();
+           }
+
+        }
+        
+        
+        public void extractClarity(String Req)
+        {
+           String regex = "<Clarity>.*</Clarity>";
+           Pattern pattern = Pattern.compile(regex);
+  		   Matcher matcher = pattern.matcher(Req);
+  		   String regular = null ;
+  		   while (matcher.find())
+  		   {  			   
+  			 regular = matcher.group();
+  			 if(regular != null)
+  			 {
+	  			 //System.out.println("***"+regular);
+	  			 String []list = regular.split("[<>]");
+			     Table_Clarity_list.addRow(new Object[]{list[3], list[5], list[7], Integer.parseInt(list[9]), Boolean.parseBoolean(list[11])});     		   
+  			 }
+  		 }    		  
+        }
+        
+        
+        public void extractNonAmbiguty(String Req)
+        {
+           String regex = "<NonAmbiguity>.*</NonAmbiguity>";
+           Pattern pattern = Pattern.compile(regex);
+  		   Matcher matcher = pattern.matcher(Req);
+  		   String regular = null ;
+  		   while (matcher.find())
+		   {  			   
+			 regular = matcher.group();
+			 if(regular != null)
+			 {
+	  			 //System.out.println("***"+regular);
+	  			 String []list = regular.split("[<>]");
+			     Table_Non_Ambiguity_list.addRow(new Object[]{list[3], list[5], list[7], Integer.parseInt(list[9]), Boolean.parseBoolean(list[11])});     		   
+			 }
+		   }   
+        }
+        
+        
+        public void extractGeneral(String Req)
+        {
+           String regex = "<General>.*</General>";
+           Pattern pattern = Pattern.compile(regex);
+  		   Matcher matcher = pattern.matcher(Req);
+  		   String regular = null ;
+  		   while (matcher.find())
+		   {  			   
+			 regular = matcher.group();
+			 if(regular != null)
+			 {
+	  			 System.out.println("***"+regular);
+	  			 String []list = regular.split("[<>]");
+			     Table_General_list.addRow(new Object[]{list[3], list[5], list[7], Integer.parseInt(list[9]), Boolean.parseBoolean(list[11])});     		   
+			 }
+		   }   
+        }
+        
+        public void extractCompleteness(String Req)
+        {
+           String regex = "<Completeness>.*</Completeness>";
+           Pattern pattern = Pattern.compile(regex);
+  		   Matcher matcher = pattern.matcher(Req);
+  		   String regular = null ;
+  		   while (matcher.find())
+		   {  			   
+			 regular = matcher.group();
+			 if(regular != null)
+			 {
+	  			 //System.out.println("***"+regular);
+	  			 String []list = regular.split("[<>]");
+			     Table_Completness_list.addRow(new Object[]{list[3], list[5], list[7], Integer.parseInt(list[9]), Boolean.parseBoolean(list[11])});     		   
+			 }
+		   }   
+        }
+        
+        
+        
+      }
+    
+    private class SaveFileChooser implements ActionListener {
+
+        public void actionPerformed(ActionEvent e) {
+          try {
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setFileFilter(new DocumentFileFilter());
+            int n = fileChooser.showSaveDialog(GUI.this);
+            if (n == JFileChooser.APPROVE_OPTION) {
+              save_file = fileChooser.getSelectedFile();
+              System.out.println(save_file.getPath());
+              this.save();
+              JFrame f = null;
+			     JOptionPane.showMessageDialog(f,
+			    		   "Save Procedure Successfull: "+save_file.getPath(),
+			    		   "Save Operation",
+			    		   JOptionPane.INFORMATION_MESSAGE);
+              }
+          } catch (Exception ex) {}
+        }
+        
+        
+        public void save()
+        {
+			FileWriter fw;
+			String text_req ;
+			try {
+				fw = new FileWriter(save_file);
+				for (int i = 0; i < Table_Clarity_list.getRowCount(); i++) 
+				{
+					text_req = Table_Clarity_list.getValueAt(i, 0).toString();
+					text_req = text_req.replace(">", "greater than");
+					text_req = text_req.replace("<", "lower than");
+					fw.write("<Clarity><"+ text_req+"><"+Table_Clarity_list.getValueAt(i, 1)+"><"+Table_Clarity_list.getValueAt(i, 2)+"><"+Table_Clarity_list.getValueAt(i, 3)+"><"+Table_Clarity_list.getValueAt(i, 4)+"></Clarity>");
+					fw.write("\r\n");
+   	    	    }
+				for (int i = 0; i < Table_Completness_list.getRowCount(); i++) 
+				{
+					text_req = Table_Completness_list.getValueAt(i, 0).toString();
+					text_req = text_req.replace(">", "greater than");
+					text_req = text_req.replace("<", "lower than");
+					fw.write( "<Completeness><"+text_req+"><"+Table_Completness_list.getValueAt(i, 1)+"><"+Table_Completness_list.getValueAt(i, 2)+"><"+Table_Completness_list.getValueAt(i, 3)+"><"+Table_Completness_list.getValueAt(i, 4)+"></Completeness>");
+					fw.write("\r\n");
+   	    	    }
+				for (int i = 0; i < Table_Non_Ambiguity_list.getRowCount(); i++) 
+				{
+					text_req = Table_Non_Ambiguity_list.getValueAt(i, 0).toString();
+					text_req = text_req.replace(">", "greater than");
+					text_req = text_req.replace("<", "lower than");
+					fw.write("<NonAmbiguity><"+ text_req+"><"+Table_Non_Ambiguity_list.getValueAt(i, 1)+"><"+Table_Non_Ambiguity_list.getValueAt(i, 2)+"><"+Table_Non_Ambiguity_list.getValueAt(i, 3)+"><"+Table_Non_Ambiguity_list.getValueAt(i, 4)+"></NonAmbiguity>");
+					fw.write("\r\n");
+   	    	    }
+				for (int i = 0; i < Table_General_list.getRowCount(); i++) 
+				{
+					text_req = Table_General_list.getValueAt(i, 0).toString();
+					text_req = text_req.replace(">", "greater than");
+					text_req = text_req.replace("<", "lower than");
+					fw.write("<General><"+ text_req+"><"+Table_General_list.getValueAt(i, 1)+"><"+Table_General_list.getValueAt(i, 2)+"><"+Table_General_list.getValueAt(i, 3)+"><"+Table_General_list.getValueAt(i, 4)+"></General>");
+					fw.write("\r\n");
+   	    	    }
+    			fw.close();
+			} catch (IOException e1) {
+				JFrame f = null;
+				 JOptionPane.showMessageDialog(f,
+			    		    e1.toString(),
+			    		   "Error",
+			    		   JOptionPane.ERROR_MESSAGE);
+			}
         }
 
 
@@ -519,14 +1122,46 @@ public class GUI extends JFrame {
     			ConfigurationPanel cp = new ConfigurationPanel();
     			toolconf = cp.getConfiguration();
     		}
-    		if(e.getActionCommand().equals("Save"))
+    		if(e.getActionCommand().equals("New"))
     		{
-    			System.out.println("Selected: " + toolconf.getAdverbs());
-    			System.out.println("Selected: " + toolconf.getAnaphoric());
+    			textArea.setText(""); ;
+    			Anaphoric.setSelected(false); 
+    			PassiveVerbs.setSelected(false);
+    			Adverbs.setSelected(false);
+    			Vagueness.setSelected(false);
+    			EscessiveLength.setSelected(false);
+    			unknownReference.setSelected(false);
+    			Coordination.setSelected(false);
+    			unknownAcronyms.setSelected(false);
+    			MissingRequirement.setSelected(false);
+    			MissingMesure.setSelected(false);
+    		 	if (Table_Non_Ambiguity_list.getRowCount() > 0) {
+            	    for (int i = Table_Non_Ambiguity_list.getRowCount() - 1; i > -1; i--) {
+            	    	Table_Non_Ambiguity_list.removeRow(i);
+            	    }
+            	}
+            	
+            	if (Table_Completness_list.getRowCount() > 0) {
+            	    for (int i = Table_Completness_list.getRowCount() - 1; i > -1; i--) {
+            	    	Table_Completness_list.removeRow(i);
+            	    }
+            	}
+            	
+            	if (Table_Clarity_list.getRowCount() > 0) {
+            	    for (int i = Table_Clarity_list.getRowCount() - 1; i > -1; i--) {
+            	    	Table_Clarity_list.removeRow(i);
+            	    }
+            	}
+            	if (Table_General_list.getRowCount() > 0) {
+            	    for (int i = Table_General_list.getRowCount() - 1; i > -1; i--) {
+            	    	Table_General_list.removeRow(i);
+            	    }
+            	}
+    			
     		}
     		else
     		{
-    	    System.out.println("Selected: " + e.getActionCommand());
+    			System.out.println("Selected: " + e.getActionCommand());
     		}
     	  }
     	}
@@ -537,12 +1172,13 @@ public class GUI extends JFrame {
         boolean ret = false;
           if (file.isDirectory()) return true;
             String fname = file.getName().toLowerCase();
-            if(fname.endsWith("docx") || fname.endsWith("xlsx")|| fname.endsWith("doc"))
+            if(fname.endsWith("docx") || fname.endsWith("xlsx")|| fname.endsWith("doc") || fname.endsWith(".txt"))
             {
             	ret = true;
             }
             return ret;
         }
+        
         
 
         public String getDescription() {
@@ -657,7 +1293,11 @@ public class GUI extends JFrame {
             	    	Table_Clarity_list.removeRow(i);
             	    }
             	}
-            	
+            	if (Table_General_list.getRowCount() > 0) {
+            	    for (int i = Table_General_list.getRowCount() - 1; i > -1; i--) {
+            	    	Table_General_list.removeRow(i);
+            	    }
+            	}
             	
             	System.out.println(Table_Non_Ambiguity_list.getRowCount());
             	System.out.println(Table_Clarity_list.getRowCount());
@@ -699,6 +1339,7 @@ public class GUI extends JFrame {
 	            	conf.setVagueness(vagueness);
 	            	conf.setUnknownreference(unknownreference);
 	            	conf.setMissingrequirement(missingrequirement);
+	            	CheckToolConf(toolconf);
 	            	conf.setAdverbs_rank(toolconf.getAdverbs());
 	            	conf.setAnaphoric_rank(toolconf.getAnaphoric());
 	            	conf.setCoordination_rank(toolconf.getCoordination());
@@ -715,13 +1356,14 @@ public class GUI extends JFrame {
 	        		while(it.hasNext())
 	        		{
 	        			
+	        			
 	        			Annotations ann = it.next();
 	        			if(ann.getIndicator().equals("AnaphoricAmbiguity") || ann.getIndicator().equals("CoordAmbiguity"))
 	        			{
 	        				//System.out.println("Adding non amb "+ann.getIndicator());
 	        				nonambiguity_list.add(ann);
 	        			}
-	        			if(ann.getIndicator().equals("Vagueness") || ann.getIndicator().equals("Excessive_length_token") || ann.getIndicator().equals("Adverbs_detected") || ann.getIndicator().equals("Passive"))
+	        			if(ann.getIndicator().equals("Vagueness") || ann.getIndicator().equals("Excessive_length_phrase") || ann.getIndicator().equals("Adverbs_detected") || ann.getIndicator().equals("Passive"))
 	        			{
 	        				//System.out.println("Adding clarity "+ann.getIndicator());
 	        				clarity_list.add(ann);
@@ -731,31 +1373,57 @@ public class GUI extends JFrame {
 	        				//System.out.println("Adding compl "+ann.getIndicator());
 	        				completeness_list.add(ann);
 	        			}
+	        			
+	        			
 	        		}
-	        		
+	        		Thread.sleep(500, 0);
 	        		Collections.sort(nonambiguity_list, new MyComparator());
 	        		it = nonambiguity_list.iterator();
 	        		while(it.hasNext())
 	        		{
+	        			
 	        			Annotations ann = it.next();
-	        			Table_Non_Ambiguity_list.addRow(new Object[]{ann.getDefect(), ann.getIndicatorName(), ann.getRank(), false});
+	        			highligth_nonambiguity.add(ann.getDefect());
+	        			Table_Non_Ambiguity_list.addRow(new Object[]{ann.getText(), ann.getIndicatorName(), ann.getExplanation(), ann.getRank(), false});
+	        			
 	        		}
+	        		Thread.sleep(500, 0);
 	        		Collections.sort(completeness_list, new MyComparator());
 	        		it = completeness_list.iterator();
 	        		while(it.hasNext())
 	        		{
+	        			
 	        			Annotations ann = it.next();
-	        			Table_Completness_list.addRow(new Object[]{ann.getDefect(), ann.getIndicatorName(), ann.getRank(), false});
+	        			highligth_completeness.add(ann.getDefect());
+	        			Table_Completness_list.addRow(new Object[]{ann.getText(), ann.getIndicatorName(),ann.getExplanation(), ann.getRank(), false});
+	        			
 	        		}
-	        		
+	        		Thread.sleep(500, 0);
 	        		Collections.sort(clarity_list, new MyComparator());
 	        		it = clarity_list.iterator();
 	        		while(it.hasNext())
 	        		{
-	        			Annotations ann = it.next();
-	        			Table_Clarity_list.addRow(new Object[]{ann.getDefect(), ann.getIndicatorName(), ann.getRank(), false});
+	        			
+	        			Annotations ann = it.next();	        			
+	        			highligth_clarity.add(ann.getDefect());
+	        			Table_Clarity_list.addRow(new Object[]{ann.getText(), ann.getIndicatorName(), ann.getExplanation(), ann.getRank(), false});
+	        		
+
 	        		}
-	            	setSize(1300, 400);
+	        		
+	        		ann_general = da.RunGeneral();
+	        		Collections.sort(ann_general, new comparator_gen());
+	        		System.out.println(ann_general.size());
+	        		Iterator <AnnotationGeneral> it1 = ann_general.iterator();
+	        		while(it1.hasNext())
+	        		{
+	        			AnnotationGeneral ann_gene = it1.next();
+	        			
+	        			Table_General_list.addRow(new Object[]{ann_gene.getText(), ann_gene.getIndicator(), ann_gene.getExplanation(), ann_gene.getRank(), false});
+	        		}
+	        		System.out.println(ann_general.size());
+	        		highligth_general = da.getDocument().getInd();
+	            	setSize(1400, 700);
 	            	tab.setVisible(true);
 	            	ReportButton.setVisible(true);
 	           	}
@@ -765,9 +1433,62 @@ public class GUI extends JFrame {
             return null;
         }
 
-        @Override
+       
+
+		@Override
         public void done() {
            Toolkit.getDefaultToolkit().beep();
         }
     }
+    
+    public void CheckToolConf(ToolConfiguration tool)
+    {
+	     if(tool.getLengththres() == 0)
+	   	 {
+	   		 tool.setLengththres(60);
+	   		 tool.updateThreshold(60);
+	   	 }
+	   	 if(tool.getAnaphoric() == 0)
+	   	 {
+	   		 tool.setAnaphoric(5);
+	   	 }
+	   	 if(tool.getCoordination() == 0)
+	   	 {
+	   		 tool.setCoordination(5); 
+	   	 }
+	   	 if(tool.getPassiveverbs() == 0)
+	   	 {
+	   		 tool.setPassiveverbs(5);
+	   	 }
+	   	 
+	   	 if(tool.getAdverbs() == 0)
+	   	 {
+	   		 tool.setAdverbs(5);
+	   	 }
+	   	 if(tool.getVagueness() == 0)
+	   	 {
+	   		 tool.setVagueness(5); 
+	   	 }
+	   	 if(tool.getExcessiveLength() == 0)
+	   	 {
+	   		 tool.setExcessiveLength(5);
+	   	 }
+	   	 if(tool.getUnknownreference() == 0)
+	   	 {
+	   		 tool.setUnknownreference(5); 
+	   	}
+	   	 if(tool.getUnknownacronyms() == 0)
+	   	 {
+	   		 tool.setUnknownacronyms(5);
+	   	 }
+	   	 if(tool.getMissingrequirement() == 0)
+	   	 {
+	   		 tool.setMissingrequirement(5); 
+	   	}
+	   	 if(tool.getMissingMesure() == 0)
+	   	 {
+	   		 tool.setMissingMesure(5); 
+	   	 }
+    }
+
 }

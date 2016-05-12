@@ -3,18 +3,20 @@ package GUI;
 public class ReportTable {
 
 	
-	public ReportTable(String text, String indicator, int rank, boolean defect) {
+	public ReportTable(String text, String indicator, int rank, boolean defect,String Description) {
 		super();
 		Text = text;
 		Indicator = indicator;
 		this.rank = rank;
 		this.defect = defect;
+		this.Description = Description;
 	}
 	
 	private String Text;
 	private String Indicator;
 	private int rank;
 	private boolean defect;
+	private String Description;
 	public String getText() {
 		return Text;
 	}
@@ -39,6 +41,13 @@ public class ReportTable {
 	public void setDefect(boolean defect) {
 		this.defect = defect;
 	}
+	public String getDescription() {
+		return Description;
+	}
+	public void setDescription(String description) {
+		Description = description;
+	}
+
 	
 	
 }

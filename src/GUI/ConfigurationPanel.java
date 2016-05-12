@@ -8,6 +8,12 @@ import java.awt.TextArea;
 import java.awt.Component;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 
 import javax.print.attribute.AttributeSet;
@@ -69,6 +75,7 @@ public class ConfigurationPanel  implements  ActionListener{
 	    toolConf = new ToolConfiguration();
 		label = new JLabel("Requirement Threshold Length:");;
 		textField = new JTextField();
+		textField.setText("60");
 		saveButton = new JButton("Save Configuration");
 		saveButton.addActionListener(this);
         // remove redundant default border of check boxes - they would hinder
@@ -117,25 +124,35 @@ public class ConfigurationPanel  implements  ActionListener{
     {
 		 anaphoriclabel = new JLabel("Anaphoric");
 		//JTextField anaphoricText = new JTextField(3) ;	
-		anaphoricText = new JTextField(new NumberLimiter(),"",10);	 
+		anaphoricText = new JTextField(new NumberLimiter(),"",10);	
+		anaphoricText.setText("5");
 		coordinationlabel = new JLabel("Coordination") ;
-		coordinationText = new JTextField(new NumberLimiter(),"",10);;
+		coordinationText = new JTextField(new NumberLimiter(),"",10);
+		coordinationText.setText("5");
 		passivelabel = new JLabel("Passive Verb");
-		passivetext = new JTextField(new NumberLimiter(),"",10); 
+		passivetext = new JTextField(new NumberLimiter(),"",10);
+		passivetext.setText("5");
 		adverbslabel = new JLabel("Adverbs");
 		adverbsText = new JTextField(new NumberLimiter(),"",10) ;
+		adverbsText.setText("5");
 		lengthlabel = new JLabel("Excessive Length");
-		lengthText = new JTextField(new NumberLimiter(),"",10);  ;
+		lengthText = new JTextField(new NumberLimiter(),"",10);  
+		lengthText.setText("5");
 		vaguenesslabel = new JLabel("Vagueness");
-		vaguenessText = new JTextField(new NumberLimiter(),"",10); ;
+		vaguenessText = new JTextField(new NumberLimiter(),"",10); 
+		vaguenessText.setText("5");
 		unreferencelabel = new JLabel("Undefined Reference");
-		unreferenceText = new JTextField(new NumberLimiter(),"",10); ;
+		unreferenceText = new JTextField(new NumberLimiter(),"",10); 
+		unreferenceText.setText("5");
 		unacronymslabel  = new JLabel("Undefined Acronyms");
-		unacronymsText = new JTextField(new NumberLimiter(),"",10);;
+		unacronymsText = new JTextField(new NumberLimiter(),"",10);
+		unacronymsText.setText("5");
 		missingrequirementlabel = new JLabel("Missing Requirement");
-		missingrequirementText = new JTextField(new NumberLimiter(),"",10); ;
+		missingrequirementText = new JTextField(new NumberLimiter(),"",10);
+		missingrequirementText.setText("5");
 		unitlabel = new JLabel("Missing Unit of Measure") ;
 		unitText = new JTextField(new NumberLimiter(),"",10);
+		unitText.setText("5");
 
 	
 		
@@ -272,7 +289,7 @@ public class ConfigurationPanel  implements  ActionListener{
 	        	 if(!vaguenessext.isEmpty())
 	        	 {
 	        		 vagueness = Integer.parseInt(vaguenessext);
-	        		 if(vagueness > 10 )
+	        		 if(vagueness > 10 || vagueness < 0)
 	        		 {
 	        			 JFrame f = null;
 	        		     JOptionPane.showMessageDialog(f,
@@ -287,7 +304,7 @@ public class ConfigurationPanel  implements  ActionListener{
 	        	 if(!excessiveLengthext.isEmpty())
 	        	 {
 	        		 excessiveLength = Integer.parseInt(excessiveLengthext);
-	        		 if(excessiveLength > 10 )
+	        		 if(excessiveLength > 10 || excessiveLength < 0)
 	        		 {
 	        			 JFrame f = null;
 	        		     JOptionPane.showMessageDialog(f,
@@ -302,7 +319,7 @@ public class ConfigurationPanel  implements  ActionListener{
 	        	 if(!unknownreferenceext.isEmpty())
 	        	 {
 	        		 unknownreference = Integer.parseInt(unknownreferenceext);
-	        		 if(unknownreference > 10 )
+	        		 if(unknownreference > 10 || unknownreference < 0)
 	        		 {
 	        			 JFrame f = null;
 	        		     JOptionPane.showMessageDialog(f,
@@ -317,7 +334,7 @@ public class ConfigurationPanel  implements  ActionListener{
 	        	 if(!unknownacronymsext.isEmpty())
 	        	 {
 	        		 unknownacronyms = Integer.parseInt(unknownacronymsext);
-	        		 if(unknownacronyms > 10 )
+	        		 if(unknownacronyms > 10 || unknownacronyms < 0 )
 	        		 {
 	        			 JFrame f = null;
 	        		     JOptionPane.showMessageDialog(f,
@@ -331,7 +348,7 @@ public class ConfigurationPanel  implements  ActionListener{
 	        	 if(!missingrequirementext.isEmpty())
 	        	 {
 	        		 missingrequirement = Integer.parseInt(missingrequirementext);
-	        		 if(missingrequirement > 10 )
+	        		 if(missingrequirement > 10 || missingrequirement < 0)
 	        		 {
 	        			 JFrame f = null;
 	        		     JOptionPane.showMessageDialog(f,
@@ -346,7 +363,7 @@ public class ConfigurationPanel  implements  ActionListener{
 	        	 if(!missingMesureext.isEmpty())
 	        	 {
 	        		 missingMesure = Integer.parseInt(missingMesureext);
-	        		 if(missingMesure > 10 )
+	        		 if(missingMesure > 10 || missingMesure < 0)
 	        		 {
 	        			 JFrame f = null;
 	        		     JOptionPane.showMessageDialog(f,
@@ -426,6 +443,7 @@ public class ConfigurationPanel  implements  ActionListener{
 	        		toolConf.setUnknownacronyms(unknownacronyms);
 	        		toolConf.setMissingMesure(missingMesure);
 	        		toolConf.setMissingrequirement(missingrequirement);
+	        		updateThreshold(lengththres);
 	        	}
 	        	 
 	        	
@@ -433,7 +451,7 @@ public class ConfigurationPanel  implements  ActionListener{
 		    } catch (Exception ex) {
 		    	JFrame f = null;
 		    	JOptionPane.showMessageDialog(f,
-		    		    "Please provide a number in the range [1,10]",
+		    		    "ahahahahaah Please provide a number in the range [1,10]",
 		    		    "Configuration error",
 		    		    JOptionPane.ERROR_MESSAGE);
 		    	error = 1;
@@ -441,7 +459,66 @@ public class ConfigurationPanel  implements  ActionListener{
 	  }
    	}
    	 
-   	
+   	public void updateThreshold(int lengththres) 
+   	{
+   		File file = new File("jape"+File.separator+"Length"+File.separator+"Template"+File.separator+"partial.jape");
+		FileReader fr = null;
+		try {
+			fr = new FileReader(file);
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		BufferedReader input = new BufferedReader(fr);
+		StringBuffer buffer = new StringBuffer();
+		String text;
+		String jape = "";
+		try {
+			while ((text = input.readLine()) != null)
+			{
+				jape = jape+"\r\n" + text;
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		System.out.println(jape);
+		try {
+			fr.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		File file1 = new File("jape"+File.separator+"Length"+File.separator+"sentence_length_0.jape");
+		file1.delete();
+		file = new File("jape"+File.separator+"Length"+File.separator+"sentence_length_0.jape");
+		try {
+			FileWriter fw = new FileWriter(file1);
+			fw.write(jape);
+			String number = Integer.toString(lengththres);
+			fw.write("if (tokensOrdered.size() > "+number+")  {");
+			fw.write("\r\n");
+			fw.write("int token_len = tokensOrdered.size();");
+			fw.write("\r\n");
+			fw.write("features.put(\"rule\", token_len);");
+			fw.write("\r\n");
+			fw.write("outputAS.add(tokens.firstNode(), tokens.lastNode(), \"Excessive_length_phrase\", features);");
+			fw.write("\r\n");
+			fw.write("}}}");
+			fw.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+	    	JFrame f = null;
+	    	JOptionPane.showMessageDialog(f,
+	    		    "Error in Length Threshold settings",
+	    		    "Configuration error",
+	    		    JOptionPane.ERROR_MESSAGE);
+	    	error = 1;
+		}
+		
+   	}
 }
 	
 	

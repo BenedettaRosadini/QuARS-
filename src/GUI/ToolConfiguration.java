@@ -1,5 +1,15 @@
 package GUI;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+
 public class ToolConfiguration {
 
 	public ToolConfiguration() {
@@ -85,4 +95,65 @@ public class ToolConfiguration {
 	public void setMissingMesure(int missingMesure) {
 		this.missingMesure = missingMesure;
 	}
+	
+	public void updateThreshold(int lengththres) 
+   	{
+   		File file = new File("jape"+File.separator+"Length"+File.separator+"Template"+File.separator+"partial.jape");
+		FileReader fr = null;
+		try {
+			fr = new FileReader(file);
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		BufferedReader input = new BufferedReader(fr);
+		StringBuffer buffer = new StringBuffer();
+		String text;
+		String jape = "";
+		try {
+			while ((text = input.readLine()) != null)
+			{
+				jape = jape+"\r\n" + text;
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		System.out.println(jape);
+		try {
+			fr.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		File file1 = new File("jape"+File.separator+"Length"+File.separator+"sentence_length_0.jape");
+		file1.delete();
+		file = new File("jape"+File.separator+"Length"+File.separator+"sentence_length_0.jape");
+		try {
+			FileWriter fw = new FileWriter(file1);
+			fw.write(jape);
+			String number = Integer.toString(lengththres);
+			fw.write("if (tokensOrdered.size() > "+number+")  {");
+			fw.write("\r\n");
+			fw.write("int token_len = tokensOrdered.size();");
+			fw.write("\r\n");
+			fw.write("features.put(\"rule\", token_len);");
+			fw.write("\r\n");
+			fw.write("outputAS.add(tokens.firstNode(), tokens.lastNode(), \"Excessive_length_phrase\", features);");
+			fw.write("\r\n");
+			fw.write("}}}");
+			fw.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+	    	JFrame f = null;
+	    	JOptionPane.showMessageDialog(f,
+	    		    "Error in Length Threshold settings",
+	    		    "Configuration error",
+	    		    JOptionPane.ERROR_MESSAGE);
+	   
+		}
+		
+   	}
 }
