@@ -946,7 +946,10 @@ public class MyCellRenderer_Completness extends JTextArea implements TableCellRe
         	    String Req =  buffer.toString();        	    
      		    //System.out.println(Req);
         	   
-        	  
+        	   highligth_clarity.clear();
+        	   highligth_completeness.clear();
+        	   highligth_general.clear();
+        	   highligth_nonambiguity.clear();
         	   extractClarity(Req);
         	   extractNonAmbiguty(Req); 
         	   extractCompleteness(Req);
@@ -972,7 +975,21 @@ public class MyCellRenderer_Completness extends JTextArea implements TableCellRe
 	  			 String []list = regular.split("[<>]");
 			     Table_Clarity_list.addRow(new Object[]{list[3], list[5], list[7], Integer.parseInt(list[9]), Boolean.parseBoolean(list[11])});     		   
   			 }
-  		 }    		  
+  		  }
+  		  regex = "<ClarityList>.*</ClarityList>";
+          pattern = Pattern.compile(regex);
+		  matcher = pattern.matcher(Req);
+		  while (matcher.find())
+ 		   {
+			  regular = matcher.group();
+			  System.out.println("****"+regular);
+			  regular = regular.replace("<ClarityList>", "");
+			  regular = regular.replace("</ClarityList>", "");
+			  System.out.println("****"+regular);
+			  highligth_clarity.add(regular);
+
+ 		  }
+
         }
         
         
@@ -991,7 +1008,20 @@ public class MyCellRenderer_Completness extends JTextArea implements TableCellRe
 	  			 String []list = regular.split("[<>]");
 			     Table_Non_Ambiguity_list.addRow(new Object[]{list[3], list[5], list[7], Integer.parseInt(list[9]), Boolean.parseBoolean(list[11])});     		   
 			 }
-		   }   
+		   }
+  		   regex = "<Non_AmbiguityList>.*</Non_AmbiguityList>";
+           pattern = Pattern.compile(regex);
+		   matcher = pattern.matcher(Req);
+		  while (matcher.find())
+		   {
+			  regular = matcher.group();
+			  System.out.println("****"+regular);
+			  regular = regular.replace("<Non_AmbiguityList>", "");
+			  regular = regular.replace("</Non_AmbiguityList>", "");
+			  System.out.println("****"+regular);
+			  highligth_nonambiguity.add(regular);
+
+		  }
         }
         
         
@@ -1006,11 +1036,24 @@ public class MyCellRenderer_Completness extends JTextArea implements TableCellRe
 			 regular = matcher.group();
 			 if(regular != null)
 			 {
-	  			 System.out.println("***"+regular);
+	  			 //System.out.println("***"+regular);
 	  			 String []list = regular.split("[<>]");
 			     Table_General_list.addRow(new Object[]{list[3], list[5], list[7], Integer.parseInt(list[9]), Boolean.parseBoolean(list[11])});     		   
 			 }
-		   }   
+		   }
+  		   regex = "<GeneralList>.*</GeneralList>";
+           pattern = Pattern.compile(regex);
+		   matcher = pattern.matcher(Req);
+		  while (matcher.find())
+		   {
+			  regular = matcher.group();
+			  System.out.println("****"+regular);
+			  regular = regular.replace("<GeneralList>", "");
+			  regular = regular.replace("</GeneralList>", "");
+			  System.out.println("****"+regular);
+			  highligth_general.add(regular);
+
+		  }
         }
         
         public void extractCompleteness(String Req)
@@ -1028,7 +1071,20 @@ public class MyCellRenderer_Completness extends JTextArea implements TableCellRe
 	  			 String []list = regular.split("[<>]");
 			     Table_Completness_list.addRow(new Object[]{list[3], list[5], list[7], Integer.parseInt(list[9]), Boolean.parseBoolean(list[11])});     		   
 			 }
-		   }   
+		   }
+  		   regex = "<CompletenessList>.*</CompletenessList>";
+           pattern = Pattern.compile(regex);
+		   matcher = pattern.matcher(Req);
+		  while (matcher.find())
+		   {
+			  regular = matcher.group();
+			  System.out.println("****"+regular);
+			  regular = regular.replace("<CompletenessList>", "");
+			  regular = regular.replace("</CompletenessList>", "");
+			  System.out.println("****"+regular);
+			  highligth_completeness.add(regular);
+
+		  }
         }
         
         
@@ -1070,6 +1126,13 @@ public class MyCellRenderer_Completness extends JTextArea implements TableCellRe
 					fw.write("<Clarity><"+ text_req+"><"+Table_Clarity_list.getValueAt(i, 1)+"><"+Table_Clarity_list.getValueAt(i, 2)+"><"+Table_Clarity_list.getValueAt(i, 3)+"><"+Table_Clarity_list.getValueAt(i, 4)+"></Clarity>");
 					fw.write("\r\n");
    	    	    }
+				Iterator <String> itcl = highligth_clarity.iterator();
+				while(itcl.hasNext())
+				{
+					String g = itcl.next();
+					fw.write("<ClarityList>"+g+"</ClarityList>");
+					fw.write("\r\n");
+				}
 				for (int i = 0; i < Table_Completness_list.getRowCount(); i++) 
 				{
 					text_req = Table_Completness_list.getValueAt(i, 0).toString();
@@ -1078,6 +1141,13 @@ public class MyCellRenderer_Completness extends JTextArea implements TableCellRe
 					fw.write( "<Completeness><"+text_req+"><"+Table_Completness_list.getValueAt(i, 1)+"><"+Table_Completness_list.getValueAt(i, 2)+"><"+Table_Completness_list.getValueAt(i, 3)+"><"+Table_Completness_list.getValueAt(i, 4)+"></Completeness>");
 					fw.write("\r\n");
    	    	    }
+				Iterator <String> itco = highligth_completeness.iterator();
+				while(itco.hasNext())
+				{
+					String g = itco.next();
+					fw.write("<CompletenessList>"+g+"</CompletenessList>");
+					fw.write("\r\n");
+				}
 				for (int i = 0; i < Table_Non_Ambiguity_list.getRowCount(); i++) 
 				{
 					text_req = Table_Non_Ambiguity_list.getValueAt(i, 0).toString();
@@ -1086,6 +1156,13 @@ public class MyCellRenderer_Completness extends JTextArea implements TableCellRe
 					fw.write("<NonAmbiguity><"+ text_req+"><"+Table_Non_Ambiguity_list.getValueAt(i, 1)+"><"+Table_Non_Ambiguity_list.getValueAt(i, 2)+"><"+Table_Non_Ambiguity_list.getValueAt(i, 3)+"><"+Table_Non_Ambiguity_list.getValueAt(i, 4)+"></NonAmbiguity>");
 					fw.write("\r\n");
    	    	    }
+				Iterator <String> itna = highligth_nonambiguity.iterator();
+				while(itna.hasNext())
+				{
+					String g = itna.next();
+					fw.write("<Non_AmbiguityList>"+g+"</Non_AmbiguityList>");
+					fw.write("\r\n");
+				}
 				for (int i = 0; i < Table_General_list.getRowCount(); i++) 
 				{
 					text_req = Table_General_list.getValueAt(i, 0).toString();
@@ -1094,6 +1171,13 @@ public class MyCellRenderer_Completness extends JTextArea implements TableCellRe
 					fw.write("<General><"+ text_req+"><"+Table_General_list.getValueAt(i, 1)+"><"+Table_General_list.getValueAt(i, 2)+"><"+Table_General_list.getValueAt(i, 3)+"><"+Table_General_list.getValueAt(i, 4)+"></General>");
 					fw.write("\r\n");
    	    	    }
+				Iterator <String> itge = highligth_general.iterator();
+				while(itge.hasNext())
+				{
+					String g = itge.next();
+					fw.write("<GeneralList>"+g+"</GeneralList>");
+					fw.write("\r\n");
+				}
     			fw.close();
 			} catch (IOException e1) {
 				JFrame f = null;
@@ -1317,17 +1401,18 @@ public class MyCellRenderer_Completness extends JTextArea implements TableCellRe
           	    boolean missingMesure = MissingMesure.isSelected();
 	           	boolean pressed = (anaphoric || coordination || passiveverbs || adverbs || vagueness || excessiveLength || unknownreference || unknownacronyms || missingrequirement || missingMesure); 
 	           	DocPath = textArea.getText();
-	           	if((DocPath.length() == 0) || (pressed == false))
+	           	if((DocPath.length() == 0) || (pressed == false)|| DocPath.contains(".txt"))
 	           	{
 	           		JFrame f= null;
 	           		 JOptionPane.showMessageDialog(f,
-	     		    		   "Document Path or Quality Indicator Missing",
+	     		    		   "Running Error. Please check: \r\n 1) DocPath is not empty \r\n 2) almost a quality indicator is selected \r\n 3) the Extension is .xlsx",
 	     		    		   "Run error",
 	     		    		   JOptionPane.ERROR_MESSAGE);
 	           		 
 	           	}
 	           	else
-	           	{         		
+	           	{   
+	           		
 	           		conf.setDocumentPath(DocPath);
 	            	conf.setAdverbs(adverbs);
 	            	conf.setAnaphoric(anaphoric);
@@ -1376,7 +1461,7 @@ public class MyCellRenderer_Completness extends JTextArea implements TableCellRe
 	        			
 	        			
 	        		}
-	        		Thread.sleep(500, 0);
+	        	
 	        		Collections.sort(nonambiguity_list, new MyComparator());
 	        		it = nonambiguity_list.iterator();
 	        		while(it.hasNext())
@@ -1387,7 +1472,7 @@ public class MyCellRenderer_Completness extends JTextArea implements TableCellRe
 	        			Table_Non_Ambiguity_list.addRow(new Object[]{ann.getText(), ann.getIndicatorName(), ann.getExplanation(), ann.getRank(), false});
 	        			
 	        		}
-	        		Thread.sleep(500, 0);
+	        		
 	        		Collections.sort(completeness_list, new MyComparator());
 	        		it = completeness_list.iterator();
 	        		while(it.hasNext())
@@ -1398,7 +1483,7 @@ public class MyCellRenderer_Completness extends JTextArea implements TableCellRe
 	        			Table_Completness_list.addRow(new Object[]{ann.getText(), ann.getIndicatorName(),ann.getExplanation(), ann.getRank(), false});
 	        			
 	        		}
-	        		Thread.sleep(500, 0);
+	        		
 	        		Collections.sort(clarity_list, new MyComparator());
 	        		it = clarity_list.iterator();
 	        		while(it.hasNext())
