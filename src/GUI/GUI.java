@@ -321,22 +321,22 @@ public class GUI extends JFrame {
          
         JComponent panel1 = makeTextPanelCompleteness("Completeness");
         tabbedPane.addTab("Completeness", icon, panel1,
-                "Does nothing");
+                "Completeness Quality");
         tabbedPane.setMnemonicAt(0, KeyEvent.VK_1);
          
         JComponent panel2 = makeTextPanelNonAmbiguity("NonAmbiguity");
         tabbedPane.addTab("NonAmbiguity", icon, panel2,
-                "Does twice as much nothing");
+                "NonAmbiguity Quality");
         tabbedPane.setMnemonicAt(1, KeyEvent.VK_2);
          
         JComponent panel3 = Clarity("Clarity");
         tabbedPane.addTab("Clarity", icon, panel3,
-                "Still does nothing");
+                "Clarity Quality");
         tabbedPane.setMnemonicAt(2, KeyEvent.VK_3);
         
-        JComponent panel4= General("Ranked by Indicator");
+        JComponent panel4= General("Ranking by Indicator");
         tabbedPane.addTab("Ranked by Indicator", icon, panel4,
-                "Still does nothing");
+                "Ranked by Indicator");
         tabbedPane.setMnemonicAt(3, KeyEvent.VK_3);
          
          
@@ -657,7 +657,7 @@ public class MyCellRenderer_Completness extends JTextArea implements TableCellRe
     private class GenerateReport implements ActionListener {
    	 public void actionPerformed(ActionEvent e) 
    	 {
-   		Object[] possibilities = {"Generate only Defect", "Generate All"};
+   		Object[] possibilities = {"Include only true positive cases", "Include All Defects"};
    		JFrame frame = null;
    		 Icon icon = null;
    		String s = (String)JOptionPane.showInputDialog(
@@ -671,7 +671,7 @@ public class MyCellRenderer_Completness extends JTextArea implements TableCellRe
 
    		//If a string was returned, say so.
    		if ((s != null) && (s.length() > 0)) {
-   		    if(s.equals("Generate only Defect"))
+   		    if(s.equals("Include only true positive cases"))
    		    {
    		    	 String text;
 	   	   		 String indicator;
@@ -1405,7 +1405,7 @@ public class MyCellRenderer_Completness extends JTextArea implements TableCellRe
 	           	{
 	           		JFrame f= null;
 	           		 JOptionPane.showMessageDialog(f,
-	     		    		   "Running Error. Please check: \r\n 1) DocPath is not empty \r\n 2) almost a quality indicator is selected \r\n 3) the Extension is .xlsx",
+	     		    		   "Running Error. Please check: \r\n 1) DocPath is not empty \r\n 2) almost a quality indicator is selected \r\n 3) the Extension shall be .xlsx",
 	     		    		   "Run error",
 	     		    		   JOptionPane.ERROR_MESSAGE);
 	           		 
@@ -1451,6 +1451,7 @@ public class MyCellRenderer_Completness extends JTextArea implements TableCellRe
 	        			if(ann.getIndicator().equals("Vagueness") || ann.getIndicator().equals("Excessive_length_phrase") || ann.getIndicator().equals("Adverbs_detected") || ann.getIndicator().equals("Passive"))
 	        			{
 	        				//System.out.println("Adding clarity "+ann.getIndicator());
+	        			
 	        				clarity_list.add(ann);
 	        			}
 	        			if(ann.getIndicator().equals("Unknownacronyms") || ann.getIndicator().equals("MissingElse") || ann.getIndicator().equals("MissingMeasure") || ann.getIndicator().equals("MissingReference"))
@@ -1461,50 +1462,71 @@ public class MyCellRenderer_Completness extends JTextArea implements TableCellRe
 	        			
 	        			
 	        		}
-	        	
+	        		String s = null;
 	        		Collections.sort(nonambiguity_list, new MyComparator());
 	        		it = nonambiguity_list.iterator();
 	        		while(it.hasNext())
 	        		{
 	        			
 	        			Annotations ann = it.next();
-	        			highligth_nonambiguity.add(ann.getDefect());
+	        			s = "";
+	        			s = ann.getDefect().trim();
+	        			highligth_nonambiguity.add(s);
+	        		
 	        			Table_Non_Ambiguity_list.addRow(new Object[]{ann.getText(), ann.getIndicatorName(), ann.getExplanation(), ann.getRank(), false});
 	        			
+	        		}
+	        		
+	        		if(Table_Non_Ambiguity_list.getRowCount() == 0)
+	        		{
+	        			Table_Non_Ambiguity_list.addRow(new Object[]{"no requirement detected", "no defect", "-", 0, false});
 	        		}
 	        		
 	        		Collections.sort(completeness_list, new MyComparator());
 	        		it = completeness_list.iterator();
 	        		while(it.hasNext())
 	        		{
-	        			
+	        			s = "";
 	        			Annotations ann = it.next();
-	        			highligth_completeness.add(ann.getDefect());
+	        			s = ann.getDefect().trim();
+	        			highligth_completeness.add(s);
 	        			Table_Completness_list.addRow(new Object[]{ann.getText(), ann.getIndicatorName(),ann.getExplanation(), ann.getRank(), false});
 	        			
 	        		}
-	        		
+	        		if(Table_Completness_list.getRowCount() == 0)
+	        		{
+	        			Table_Completness_list.addRow(new Object[]{"no requirement detected", "no defect", "-", 0, false});
+	        		}
 	        		Collections.sort(clarity_list, new MyComparator());
 	        		it = clarity_list.iterator();
 	        		while(it.hasNext())
 	        		{
-	        			
-	        			Annotations ann = it.next();	        			
-	        			highligth_clarity.add(ann.getDefect());
-	        			Table_Clarity_list.addRow(new Object[]{ann.getText(), ann.getIndicatorName(), ann.getExplanation(), ann.getRank(), false});
-	        		
-
+	        			s = "";
+	        			Annotations ann = it.next();	
+	        			s = ann.getDefect().trim();
+	        			if(!s.contains("even")&& !s.contains("as"))
+	        			{
+	        				highligth_clarity.add(s);
+	        				Table_Clarity_list.addRow(new Object[]{ann.getText(), ann.getIndicatorName(), ann.getExplanation(), ann.getRank(), false});	        		
+	        			}
 	        		}
-	        		
+	        		if(Table_Clarity_list.getRowCount() == 0)
+	        		{
+	        			Table_Clarity_list.addRow(new Object[]{"no requirement detected", "no defect", "-", 0, false});
+	        		}
 	        		ann_general = da.RunGeneral();
 	        		Collections.sort(ann_general, new comparator_gen());
 	        		System.out.println(ann_general.size());
 	        		Iterator <AnnotationGeneral> it1 = ann_general.iterator();
 	        		while(it1.hasNext())
 	        		{
-	        			AnnotationGeneral ann_gene = it1.next();
-	        			
+	        			AnnotationGeneral ann_gene = it1.next();	        			
 	        			Table_General_list.addRow(new Object[]{ann_gene.getText(), ann_gene.getIndicator(), ann_gene.getExplanation(), ann_gene.getRank(), false});
+	        		}
+	        		
+	        		if(Table_General_list.getRowCount() == 0)
+	        		{
+	        			Table_General_list.addRow(new Object[]{"no requirement detected", "no defect", "-", 0, false});
 	        		}
 	        		System.out.println(ann_general.size());
 	        		highligth_general = da.getDocument().getInd();
