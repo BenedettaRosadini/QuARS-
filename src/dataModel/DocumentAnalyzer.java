@@ -23,14 +23,14 @@ public class DocumentAnalyzer {
 	private Document Document;
 	private String Corpora;
 	private RequirementDocumentManager extractreq;
-	private ArrayList<Indicator> indicator_list;
-	private ArrayList<Pipeline> pipelineElement;
+
+	private ArrayList<JAPE_Transducer> pipelineElement;
 	private  ArrayList<Annotations> ann_list = new ArrayList<Annotations>();
 	private  ArrayList<Requirement> general_list = new ArrayList<Requirement>();
 	private Configuration conf ;
 	public DocumentAnalyzer(Configuration conf){	
-		indicator_list = new ArrayList<Indicator>();
-		pipelineElement = new ArrayList<Pipeline>();
+
+		pipelineElement = new ArrayList<JAPE_Transducer>();
 		extractreq = new RequirementDocumentManager();		
 		this.conf = conf;
 	}
@@ -61,17 +61,13 @@ public class DocumentAnalyzer {
 			//System.out.println("***"+cc.getText());
 			this.Document.evaluate_req(cc);			
 		}
-		System.out.println("ann_list obtained");
 		this.Document.evaluate();
-		System.out.println("document evaluate");
 		return ann_list;
 	}
 	
 	public ArrayList<AnnotationGeneral> RunGeneral(){
-		System.out.println("run general");
 		ArrayList<AnnotationGeneral> ann_gen = new ArrayList<AnnotationGeneral>();
 		ann_gen = this.Document.CreateGeneral();
-		System.out.println("ann general");
 		return ann_gen;
 	}
 
@@ -81,20 +77,13 @@ public class DocumentAnalyzer {
 	
 
 
-	public ArrayList<Indicator> getIndicator_list() {
-		return indicator_list;
-	}
-
-	public ArrayList<Pipeline> getPipelineElement() {
+	public ArrayList<JAPE_Transducer> getPipelineElement() {
 		return pipelineElement;
 	}
 
 
-	public void setIndicator_list(ArrayList<Indicator> indicator_list) {
-		this.indicator_list = indicator_list;
-	}
 
-	public void setPipelineElement(ArrayList<Pipeline> pipelineElement) {
+	public void setPipelineElement(ArrayList<JAPE_Transducer> pipelineElement) {
 		this.pipelineElement = pipelineElement;
 	}
 
@@ -107,7 +96,7 @@ public class DocumentAnalyzer {
 		if(conf.isAnaphoric() == true)
 		{
 			File directory = new File(System.getProperty("user.dir")+File.separator+"jape"+File.separator+"anaphoric");
-			Pipeline pipeline = new Pipeline(false, "Anaphoric", "AnaphoricAmbiguity", conf.getAnaphoric_rank());
+			JAPE_Transducer pipeline = new JAPE_Transducer(false, "Anaphoric", "AnaphoricAmbiguity", conf.getAnaphoric_rank());
 			File[] list = directory.listFiles();
 			for(int i = 0; i < list.length;i++)
 			{
@@ -122,7 +111,7 @@ public class DocumentAnalyzer {
 		if(conf.isCoordination() == true)
 		{
 			File directory = new File(System.getProperty("user.dir")+File.separator+"jape"+File.separator+"coordination");
-			Pipeline pipeline = new Pipeline(false, "Coordination", "CoordAmbiguity", conf.getCoordination_rank());
+			JAPE_Transducer pipeline = new JAPE_Transducer(false, "Coordination", "CoordAmbiguity", conf.getCoordination_rank());
 			File[] list = directory.listFiles();
 			for(int i = 0; i < list.length;i++)
 			{
@@ -138,7 +127,7 @@ public class DocumentAnalyzer {
 		{
 		
 			File directory = new File(System.getProperty("user.dir")+File.separator+"jape"+File.separator+"passive_verb");
-			Pipeline pipeline = new Pipeline(false, "PassiveVerbs","Passive", conf.getPassiveverbs_rank());
+			JAPE_Transducer pipeline = new JAPE_Transducer(false, "PassiveVerbs","Passive", conf.getPassiveverbs_rank());
 			File[] list = directory.listFiles();
 			for(int i = 0; i < list.length;i++)
 			{
@@ -154,7 +143,7 @@ public class DocumentAnalyzer {
 		{                                                                                                                 
 		                                                                                                                  
 			File directory = new File(System.getProperty("user.dir")+File.separator+"jape"+File.separator+"adverbs");
-			Pipeline pipeline = new Pipeline(false, "Adverbs","Adverbs_detected", conf.getAdverbs_rank());                                                                      
+			JAPE_Transducer pipeline = new JAPE_Transducer(false, "Adverbs","Adverbs_detected", conf.getAdverbs_rank());                                                                      
 			File[] list = directory.listFiles();                                                                          
 			for(int i = 0; i < list.length;i++)                                                                           
 			{                                                                                                             
@@ -170,7 +159,7 @@ public class DocumentAnalyzer {
 		{                                                                                                                 
 		                                                                                                                  
 			File directory = new File(System.getProperty("user.dir")+File.separator+"jape"+File.separator+"Length");
-			Pipeline pipeline = new Pipeline(true, "ExcessiveLength","Excessive_length_phrase", conf.getExcessiveLength_rank());                                                                      
+			JAPE_Transducer pipeline = new JAPE_Transducer(true, "ExcessiveLength","Excessive_length_phrase", conf.getExcessiveLength_rank());                                                                      
 			File[] list = directory.listFiles();                                                                          
 			for(int i = 0; i < list.length;i++)                                                                           
 			{                                                                                                             
@@ -186,7 +175,7 @@ public class DocumentAnalyzer {
 		{                                                                                                                 
 		                                                                                                                  
 			File directory = new File(System.getProperty("user.dir")+File.separator+"jape"+File.separator+"acronyms");
-			Pipeline pipeline = new Pipeline(false, "UnknownAcronyms", "Unknownacronyms", conf.getUnknownacronyms_rank());                                                                      
+			JAPE_Transducer pipeline = new JAPE_Transducer(false, "UnknownAcronyms", "Unknownacronyms", conf.getUnknownacronyms_rank());                                                                      
 			File[] list = directory.listFiles();                                                                          
 			for(int i = 0; i < list.length;i++)                                                                           
 			{                                                                                                             
@@ -202,7 +191,7 @@ public class DocumentAnalyzer {
 		{                                                                                                                 
 		                                                                                                                  
 			File directory = new File(System.getProperty("user.dir")+File.separator+"jape"+File.separator+"Missingrequirement");
-			Pipeline pipeline = new Pipeline(false, "MissingRequirement","MissingElse", conf.getMissingrequirement_rank());                                                                      
+			JAPE_Transducer pipeline = new JAPE_Transducer(false, "MissingRequirement","MissingElse", conf.getMissingrequirement_rank());                                                                      
 			File[] list = directory.listFiles();                                                                          
 			for(int i = 0; i < list.length;i++)                                                                           
 			{                                                                                                             
@@ -217,14 +206,15 @@ public class DocumentAnalyzer {
 		if(conf.isMissingMeasure() == true)                                                                                 
 		{                                                                                                                 
 		                                                                                                                  
-			File directory = new File(System.getProperty("user.dir")+File.separator+"jape"+File.separator+"Missingrequirement");
-			Pipeline pipeline = new Pipeline(false, "MissingMeasure", "MissingUnit", conf.getMissingMeasure_rank());                                                                      
+			File directory = new File(System.getProperty("user.dir")+File.separator+"jape"+File.separator+"MissingMeasure");
+			JAPE_Transducer pipeline = new JAPE_Transducer(false, "MissingMeasure", "MissingUnit", conf.getMissingMeasure_rank());                                                                      
 			File[] list = directory.listFiles();                                                                          
 			for(int i = 0; i < list.length;i++)                                                                           
 			{                                                                                                             
 				if(list[i].getName().contains(".jape"))                                                                    
 				{                                                                                                         
 					                                                          
+					System.out.println(list[i].getName());
 					pipeline.addJape_Path(list[i].getPath());                                                             
 				}                                                                                                         
 			}                                                                                                             
@@ -235,7 +225,7 @@ public class DocumentAnalyzer {
 		{                                                                                                                 
 		                                                                                                                  
 			File directory = new File(System.getProperty("user.dir")+File.separator+"jape"+File.separator+"vagueness");
-			Pipeline pipeline = new Pipeline(false,"Vagueness", "Vagueness", conf.getVagueness_rank() );                                                                      
+			JAPE_Transducer pipeline = new JAPE_Transducer(false,"Vagueness", "Vagueness", conf.getVagueness_rank() );                                                                      
 			File[] list = directory.listFiles();                                                                          
 			for(int i = 0; i < list.length;i++)                                                                           
 			{                                                                                                             
@@ -250,7 +240,7 @@ public class DocumentAnalyzer {
 		{                                                                                                                 
 		                                                                                                                  
 			File directory = new File(System.getProperty("user.dir")+File.separator+"jape"+File.separator+"MissingReference");
-			Pipeline pipeline = new Pipeline(false, "UnknownReference", "MissingReference", conf.getMissingrequirement_rank());                                                                      
+			JAPE_Transducer pipeline = new JAPE_Transducer(false, "UnknownReference", "MissingReference", conf.getMissingrequirement_rank());                                                                      
 			File[] list = directory.listFiles();                                                                          
 			for(int i = 0; i < list.length;i++)                                                                           
 			{                                                                                                             
@@ -280,11 +270,11 @@ public class DocumentAnalyzer {
 	
 	public void readPipelineList()
 	{
-		Iterator <Pipeline> it = pipelineElement.iterator();
+		Iterator <JAPE_Transducer> it = pipelineElement.iterator();
 		
 		while(it.hasNext())
 		{
-			Pipeline p = it.next();
+			JAPE_Transducer p = it.next();
 			System.out.println(p.getName()+ ": ");
 			Iterator <String> it1 = p.getJape_Path().iterator();
 			while(it1.hasNext())
