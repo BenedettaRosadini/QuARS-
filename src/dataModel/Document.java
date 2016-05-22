@@ -56,12 +56,11 @@ public class Document {
 	
 	public ArrayList<AnnotationGeneral> CreateGeneral()
 	{
-		
-		//System.out.println("******"+general_list.size());
 		String Indicator="";
 		int rank = 0;
 		String Explanation="";
 		Iterator <Requirement> it = general_list.iterator();
+		String s = "";
 		while(it.hasNext())
 		{
 			Requirement req = it.next();
@@ -71,10 +70,11 @@ public class Document {
 				while(ita.hasNext())
 				{
 					Annotations an = ita.next();
-					ind.add(an.getDefect());
-					Indicator =Indicator +" - " + an.getIndicatorName();
+					s = an.getDefect().trim();
+					ind.add(s);
+					Indicator =Indicator +" \r\n\r\n " + an.getIndicatorName();
 					rank = rank + an.getRank();
-					Explanation = Explanation + " - " +an.getExplanation();
+					Explanation = Explanation + " \r\n\r\n " +an.getExplanation();
 					
 				}
 			}
