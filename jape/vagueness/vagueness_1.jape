@@ -1,0 +1,13 @@
+Phase: MatchingStyles
+Input: Lookup
+Options: control = first
+
+
+Rule: Test1
+Priority: 100
+
+(
+ {Lookup.majorType == vague}
+):match
+-->
+:match.Vagueness = {type = :match.Lookup@cleanString}

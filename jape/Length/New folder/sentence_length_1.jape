@@ -1,0 +1,10 @@
+Phase: Count
+Input: Token
+Options: control = appelt
+
+Rule: Count
+(
+{Token.length >= "60"}
+):tok
+-->
+:tok.Excessive_length_token = {rule = Count}

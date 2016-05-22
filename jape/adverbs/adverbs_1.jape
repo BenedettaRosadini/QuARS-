@@ -1,0 +1,14 @@
+Imports: {
+  import static gate.Utils.*;
+}
+
+Phase: FalsePositiveAdverbs
+Input: Token Adverbs
+Options: control = All
+ 
+Rule: AdverbsFalsePositive
+(
+({Adverbs, Token.string =~ "[.]*ly$"})*
+):fp
+-->
+:fp.Adverbs_detected = {}
