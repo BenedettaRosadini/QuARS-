@@ -52,13 +52,32 @@ public class GateInterface {
 
 	private SerialAnalyserController pipeline;
 	static public ArrayList <Annotations> ann_list = new ArrayList <Annotations>();
+	static public ArrayList <String> false_pos = new ArrayList <String>();
 	public GateInterface()
 	{
 		super();
 		//jape_rules = new ArrayList <LanguageAnalyser>();
+		false_pos.add("logical and");
+		false_pos.add("logical or");
+		false_pos.add("green LED");
+		false_pos.add("Short circuit");
+		false_pos.add("short circuit");
+		false_pos.add("Raw data");
+		false_pos.add("raw data");
+		false_pos.add("Hard disk");
+		false_pos.add("flashing ligth");
+		false_pos.add("hard disk");
+		false_pos.add("also");
+		false_pos.add("even");
+		false_pos.add("thereafter");
+		false_pos.add("once");
+		false_pos.add(" as");
+		false_pos.add(" well");
+		false_pos.add("not");
+		false_pos.add("Information purposes only");
 	}
 	
-	public void runPipeline(ArrayList<Pipeline> Pipe, String DocPath) throws GateException, XMLStreamException, IOException{
+	public void runPipeline(ArrayList<JAPE_Transducer> Pipe, String DocPath) throws GateException, XMLStreamException, IOException{
 			
 		ann_list.clear();
 		File f1 = new File("Annotation");
@@ -66,9 +85,9 @@ public class GateInterface {
 		String new_name;
 		File filefolder = new File("Annotation");
     	filefolder.mkdir();
-		Iterator <Pipeline>  ite= Pipe.iterator();
+		Iterator <JAPE_Transducer>  ite= Pipe.iterator();
 		Iterator <String>  it1;
-		Pipeline pipe;
+		JAPE_Transducer pipe;
 		Iterator<Document> corpIterator;
 		String s;
 		File f = new File(DocPath);
@@ -91,13 +110,14 @@ public class GateInterface {
 			LanguageAnalyser sentencesp = (LanguageAnalyser)gate.Factory.createResource("gate.creole.splitter.SentenceSplitter");
 			LanguageAnalyser Gazetteer = (LanguageAnalyser)gate.Factory.createResource("gate.creole.gazetteer.DefaultGazetteer");
 			LanguageAnalyser pos = (LanguageAnalyser)gate.Factory.createResource("gate.creole.POSTagger");
-			
+			LanguageAnalyser NPChunker = (LanguageAnalyser)gate.Factory.createResource("mark.chunking.GATEWrapper");
 			
 			pipeline.add(annotationreset);
 			pipeline.add(tokeniser);
 			pipeline.add(sentencesp);
 			pipeline.add(Gazetteer);
 			pipeline.add(pos);
+			pipeline.add(NPChunker);
 			
 			
 			it1= pipe.getJape_Path().iterator();
@@ -144,7 +164,7 @@ public class GateInterface {
 		         FileUtils.write(outputFile,doc.toXml(doc.getAnnotations().get(pipe.getAnnotation()), true));
 				//System.out.println(gate.Utils.stringFor(doc, defaultSet));
 		         extract_requirement(new_name, pipe.getAnnotation(), pipe.getRank());
-		         System.out.println("****"+ann_list.size());
+		        // System.out.println("****"+ann_list.size());
 			}
 			
 			Factory.deleteResource(doc);
@@ -182,6 +202,9 @@ public class GateInterface {
 			   //System.out.println(req);
 			   req=req.replaceAll("&lt;", "<");
 			   req=req.replaceAll("&gt;", ">");
+			   req=req.replaceAll("&quot;", "\"");			  
+			   req=req.replaceAll(">/requirement", "></requirement");
+			   req=req.replaceAll("<<", "<");
 			   String [] ann = req.split("</requirement>");
 			   String regular = null;
 			   for(int i = 0; i < ann.length ; ++i)
@@ -192,8 +215,8 @@ public class GateInterface {
 				   {
 					  
 					   ann[i]= ann[i].replaceAll("[\r\n]", "");
-//					   System.out.println(ann[i]);
-//					   System.out.println("******************");
+					   System.out.println(ann[i]);
+					   System.out.println("******************");
 					   if(annotation.equals("Excessive_length_phrase"))
 					   {
 						   String []list = ann[i].split("[<>]");
@@ -206,7 +229,7 @@ public class GateInterface {
 					   }else
 					   {
 						   extractInformation(ann[i], annotation, rank); 
-						   System.out.println("****"+ann_list.size());
+						  // System.out.println("****"+ann_list.size());
 					   }
 					   
 				   }
@@ -242,12 +265,11 @@ public class GateInterface {
 		   Matcher matcher = pattern.matcher(info);
 		   while (matcher.find())
 		   {
-			   regular = matcher.group();
-			  
+			   regular = matcher.group();			  
 		   }
-		   
+		  // System.out.println(""+regular);
 		   String []list = regular.split("[<>]");
-		   System.out.println(""+list.length);
+		  // System.out.println(""+list.length);
 		   for(int i = 0; i < list.length ; ++i)
 		   {
 			   if(((i+1) %2)==0)
@@ -256,19 +278,124 @@ public class GateInterface {
 			   }
 		   } 
 		   
-		   for(int i = 0; i < list.length ; ++i)
+		   if(annotation.equals("Adverbs_detected"))
 		   {
-			   System.out.println("**"+list[i]);
-			   if(((i %2) == 0) && i!=0)
-			   {					   
-				   Annotations a = new Annotations(annotation, text, rank, list[i]);
-				   ann_list.add(a);
+			   for(int i = 0; i < list.length ; ++i)
+			   {
+				  //System.out.println("**"+list[i]);
+				   if(((i %2) == 0) && i!=0)
+				   {		
+					  
+					   if(contaParole(list[i]) == 1)
+					   {
+						   Annotations a = new Annotations(annotation, text, rank, list[i]);
+						  // System.out.println("****"+list[i]+"--"+text);
+						   boolean check = check_amb(list[i], text);
+						   if(check == true)
+						   {
+							   ann_list.add(a);   
+						   }
+
+					   }
+	  
+					   
+				   }
 			   }
 		   }
-		   System.out.println("**"+text);
+		   else if(annotation.equals("Passive"))
+		   {
+			   for(int i = 0; i < list.length ; ++i)
+			   {
+				  System.out.println("**"+list[i]);
+				   if(((i %2) == 0) && i!=0)
+				   {		
+					  
+					   if(contaParole(list[i]) >1 && contaParole(list[i]) < 5)
+					   {
+						   Annotations a = new Annotations(annotation, text, rank, list[i]);
+						  // System.out.println("****"+list[i]+"--"+text);
+						   boolean check = check_amb(list[i], text);
+						   if(check == true)
+						   {
+							   ann_list.add(a);   
+						   }
+
+					   }
+	  
+					   
+				   }
+			   }
+		   }
+		   else
+		   {
+			   for(int i = 0; i < list.length ; ++i)
+			   {
+				   //System.out.println("**"+list[i]);
+				   if(((i %2) == 0) && i!=0)
+				   {					   
+					   Annotations a = new Annotations(annotation, text, rank, list[i]);
+					   //System.out.println("****"+list[i]+"--"+text);
+					   if(annotation.equals("Vagueness"))
+					   {
+						  // System.out.println("Analyzing"+list[i]);
+						   boolean check = check_amb(list[i], text);
+						   if(check == true)
+						   {
+							   ann_list.add(a);  
+							   //System.out.println("OK*****"+list[i]);
+						   }
+						   
+					   }else{
+						   ann_list.add(a);  
+					   }
+					  
+					   
+				   }
+			   }
+			   //System.out.println("**"+text);
+		   }
 	   }
 	}
 	
+	public boolean check_amb(String word, String sentence)
+	{
+		boolean res = true;
+		Iterator <String> it = false_pos.iterator();
 	
+	    while(it.hasNext())
+	    {
+	    	String hh = it.next();
+	    	
+	    	if(word.contains(hh))
+	    	{
+	    		res= false;
+	    	}
+	    }
+	    if(sentence.contains("Information purposes only"))
+	    {
+	    	return false;
+	    }
+		return res;
+	}
+	
+	private int contaParole(String frase) {
+	    int nc = frase.length();
+	    int indice = 0, numeroParole = 0;
+
+	    while (indice < nc) {
+	      // ignora gli spazi bianchi
+	      while ((indice < nc) && (frase.charAt(indice) == ' ')) {
+	        indice++;
+	      }
+	      // trova la fine della parola
+	      while ((indice < nc) && (frase.charAt(indice) != ' ')) {
+	        indice++;
+	      }
+	      // un'altra parola trovata, incremento del contatore
+	      numeroParole++;
+	    }
+	    return numeroParole;
+	  }
+
 }
 
