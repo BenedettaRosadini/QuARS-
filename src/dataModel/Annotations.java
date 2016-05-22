@@ -12,11 +12,11 @@ public class Annotations {
 		this.defect = defect;
 		if(this.Indicator.equals("AnaphoricAmbiguity"))
 		{
-			this.Explanation =  "Anaphoric Ambiguity: \""+this.defect+"\" refers to a previous part of the text";
+			this.Explanation =  "Anaphoric Ambiguity: \""+this.defect+"\" could refer to a previous part of the text";
 		}
 		if(this.Indicator.equals("CoordAmbiguity"))
 		{
-			this.Explanation =  "\""+this.defect+"\" Coordination Ambiguity:  too much coordinating conjunction  are present in the requirement.";
+			this.Explanation =  "\""+this.defect+"\" \r\n Coordination Ambiguity:  too much coordinating conjunction  are present in the requirement.";
 		}
 		if(this.Indicator.equals("Vagueness"))
 		{
@@ -28,19 +28,19 @@ public class Annotations {
 		}
 		if(this.Indicator.equals("Adverbs_detected"))
 		{
-			this.Explanation =  "Modal adverbs should not be used.";
+			this.Explanation =  "Modal adverbs \""+this.defect+ "\" should not be used.";
 		}
 		if(this.Indicator.equals("Passive"))
 		{
-			this.Explanation =  "Passive Verbs should not be used.";
+			this.Explanation =  "Passive  should not be used. \r\nPassive Form: \""+this.defect+ "\"";
 		}
 		if(this.Indicator.equals("Unknownacronyms"))
 		{
-			this.Explanation =  "Unknown Acronyms present in the requirement please check.";
+			this.Explanation =  "Unknown Acronyms present ( "+this.defect+" ) in the requirement please check.";
 		}
-		if(this.Indicator.equals("Missing Requirement"))
+		if(this.Indicator.equals("MissingElse"))
 		{
-			this.Explanation =  "Else condition missing.";
+			this.Explanation =  "Else condition missing. [ "+this.defect+" ]";
 		}
 		if(this.Indicator.equals("MissingMeasure"))
 		{
