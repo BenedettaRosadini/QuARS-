@@ -11,6 +11,7 @@ import gate.LanguageAnalyser;
 import gate.corpora.DocumentStaxUtils;
 import gate.creole.ANNIEConstants;
 import gate.creole.SerialAnalyserController;
+import gate.creole.gazetteer.DefaultGazetteer;
 import gate.relations.Relation;
 import gate.relations.RelationSet;
 import gate.util.GateException;
@@ -108,7 +109,9 @@ public class GateInterface {
 			LanguageAnalyser annotationreset = (LanguageAnalyser)gate.Factory.createResource("gate.creole.annotdelete.AnnotationDeletePR");
 			LanguageAnalyser tokeniser = (LanguageAnalyser)gate.Factory.createResource("gate.creole.tokeniser.DefaultTokeniser");
 			LanguageAnalyser sentencesp = (LanguageAnalyser)gate.Factory.createResource("gate.creole.splitter.SentenceSplitter");
-			LanguageAnalyser Gazetteer = (LanguageAnalyser)gate.Factory.createResource("gate.creole.gazetteer.DefaultGazetteer");
+			FeatureMap fm = Factory.newFeatureMap();
+			fm.put(DefaultGazetteer.DEF_GAZ_CASE_SENSITIVE_PARAMETER_NAME, false);
+			LanguageAnalyser Gazetteer = (LanguageAnalyser)gate.Factory.createResource("gate.creole.gazetteer.DefaultGazetteer",fm);
 			LanguageAnalyser pos = (LanguageAnalyser)gate.Factory.createResource("gate.creole.POSTagger");
 			LanguageAnalyser NPChunker = (LanguageAnalyser)gate.Factory.createResource("mark.chunking.GATEWrapper");
 			
@@ -215,8 +218,8 @@ public class GateInterface {
 				   {
 					  
 					   ann[i]= ann[i].replaceAll("[\r\n]", "");
-					   System.out.println(ann[i]);
-					   System.out.println("******************");
+					   //System.out.println(ann[i]);
+					   //System.out.println("******************");
 					   if(annotation.equals("Excessive_length_phrase"))
 					   {
 						   String []list = ann[i].split("[<>]");
@@ -269,7 +272,7 @@ public class GateInterface {
 		   }
 		  // System.out.println(""+regular);
 		   String []list = regular.split("[<>]");
-		  // System.out.println(""+list.length);
+		   System.out.println(""+list.length);
 		   for(int i = 0; i < list.length ; ++i)
 		   {
 			   if(((i+1) %2)==0)
@@ -312,6 +315,7 @@ public class GateInterface {
 					  
 					   if(contaParole(list[i]) >1 && contaParole(list[i]) < 5)
 					   {
+						   
 						   Annotations a = new Annotations(annotation, text, rank, list[i]);
 						  // System.out.println("****"+list[i]+"--"+text);
 						   boolean check = check_amb(list[i], text);
@@ -334,17 +338,19 @@ public class GateInterface {
 				   if(((i %2) == 0) && i!=0)
 				   {					   
 					   Annotations a = new Annotations(annotation, text, rank, list[i]);
-					   //System.out.println("****"+list[i]+"--"+text);
+					  // System.out.println("****"+list[i]+"--"+text+" "+i);
 					   if(annotation.equals("Vagueness"))
 					   {
-						  // System.out.println("Analyzing"+list[i]);
-						   boolean check = check_amb(list[i], text);
-						   if(check == true)
+						   if(contaParole(list[i]) == 1)
 						   {
-							   ann_list.add(a);  
-							   //System.out.println("OK*****"+list[i]);
+							  // System.out.println("Analyzing"+list[i]);
+							   boolean check = check_amb(list[i], text);
+							   if(check == true)
+							   {
+								   ann_list.add(a);  
+								   //System.out.println("OK*****"+list[i]);
+							   }
 						   }
-						   
 					   }else{
 						   ann_list.add(a);  
 					   }
@@ -359,21 +365,24 @@ public class GateInterface {
 	
 	public boolean check_amb(String word, String sentence)
 	{
-		boolean res = true;
+		boolean res = false;
+		if(false_pos.contains(word)){
+			res = true;
+		}
 		Iterator <String> it = false_pos.iterator();
 	
 	    while(it.hasNext())
 	    {
 	    	String hh = it.next();
 	    	
-	    	if(word.contains(hh))
+	    	if(sentence.contains(hh))
 	    	{
-	    		res= false;
+	    		res= true;
 	    	}
 	    }
 	    if(sentence.contains("Information purposes only"))
 	    {
-	    	return false;
+	    	return true;
 	    }
 		return res;
 	}
