@@ -663,7 +663,7 @@ public class MyCellRenderer_Completness extends JTextArea implements TableCellRe
    		String s = (String)JOptionPane.showInputDialog(
    		                    frame,
    		                    "Select the type of Report\n",
-   		                    "Customized Dialog",
+   		                    "Report Dialog",
    		                    JOptionPane.PLAIN_MESSAGE,
    		                    icon,
    		                    possibilities,
@@ -1355,7 +1355,10 @@ public class MyCellRenderer_Completness extends JTextArea implements TableCellRe
             	clarity_list.clear();;
             	completeness_list.clear();
             	nonambiguity_list.clear();
-
+            	highligth_nonambiguity.clear();
+            	highligth_clarity.clear();
+            	highligth_completeness.clear();
+            	highligth_general.clear();
             	System.out.println(Table_Non_Ambiguity_list.getRowCount());
             	System.out.println(Table_Clarity_list.getRowCount());
             	System.out.println(Table_Completness_list.getRowCount());
