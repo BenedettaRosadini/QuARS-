@@ -51,6 +51,8 @@ import org.apache.commons.io.FileUtils;
 
 public class GateInterface {
 
+    static ArrayList <String> acronyms = new ArrayList <String>();
+	static ArrayList <String> reference = new ArrayList <String>();
 	private SerialAnalyserController pipeline;
 	static public ArrayList <Annotations> ann_list = new ArrayList <Annotations>();
 	static public ArrayList <String> false_pos = new ArrayList <String>();
@@ -183,10 +185,13 @@ public class GateInterface {
 		
 	}
 	
-	public void extract_requirement(String name, String annotation, int rank)
+	public void extract_requirement(String name, String annotation, int rank) throws IOException
 	{		
 		File filename = new File(name);
-		  
+	    Extractor e = new Extractor();
+	    e.Extract();
+	    acronyms = e.getAcronyms();
+		reference = e.getReference();
 	   if (filename.isFile()) 
 	   {
 		   try {
@@ -256,9 +261,10 @@ public class GateInterface {
 	}
 	
 	
-	public void extractInformation(String info, String annotation, int rank)
+	public void extractInformation(String info, String annotation, int rank) throws IOException
 	{
-	   if(!annotation.equals("Excessive_length_phrase"))
+
+		if(!annotation.equals("Excessive_length_phrase"))
 	   {
 		   String regular = null ;
 		   String text = info;
@@ -309,7 +315,7 @@ public class GateInterface {
 		   {
 			   for(int i = 0; i < list.length ; ++i)
 			   {
-				  System.out.println("**"+list[i]);
+				  //System.out.println("**"+list[i]);
 				   if(((i %2) == 0) && i!=0)
 				   {		
 					  
@@ -327,6 +333,42 @@ public class GateInterface {
 					   }
 	  
 					   
+				   }
+			   }
+		   }
+		   else if(annotation.equals("Unknownacronyms"))
+		   {
+			   //System.out.println("Size ****"+acronyms.size());
+			   for(int i = 0; i < list.length ; ++i)
+			   {
+				   //System.out.println("guarda**"+list[i]+ 1);
+				   if(((i %2) == 0) && i!=0 && contaParole(list[i])<2 )
+				   {					   
+					   if(checkanacronysm(list[i],acronyms))
+					   {
+						   Annotations a = new Annotations(annotation, text, rank, list[i]);
+						   //System.out.println("Test ****"+list[i]);
+						   ann_list.add(a);  
+					   }
+
+				   }
+			   }
+		   }
+		   else if(annotation.equals("MissingReference"))
+		   {
+			   //System.out.println("Size ****"+acronyms.size());
+			   for(int i = 0; i < list.length ; ++i)
+			   {
+				   //System.out.println("guarda**"+list[i]+ 1);
+				   if(((i %2) == 0) && i!=0 && contaParole(list[i])< 3 )
+				   {					   
+					   if(checkanacronysm(list[i],reference))
+					   {
+						   Annotations a = new Annotations(annotation, text, rank, list[i]);
+						   System.out.println("Test ****"+list[i]);
+						   ann_list.add(a);  
+					   }
+
 				   }
 			   }
 		   }
@@ -351,11 +393,11 @@ public class GateInterface {
 								   //System.out.println("OK*****"+list[i]);
 							   }
 						   }
-					   }else{
-						   ann_list.add(a);  
 					   }
-					  
-					   
+					   else
+					   {
+						   ann_list.add(a);  
+					   }   
 				   }
 			   }
 			   //System.out.println("**"+text);
@@ -405,6 +447,24 @@ public class GateInterface {
 	    }
 	    return numeroParole;
 	  }
+	
+	private boolean checkanacronysm(String s, ArrayList<String> list)
+	{
+		boolean res = true;
+		Iterator <String> it = list.iterator();
+		
+	    while(it.hasNext())
+	    {
+	    	String check = it.next();
+	
+	    	if(check.equals(s))
+	    	{
+	    		System.out.println(check+" vs "+ s +" "+ res);
+	    		res = false;
+	    	}
+	    }
+		return res;
+	}
 
 }
 
