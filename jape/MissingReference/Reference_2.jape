@@ -1,0 +1,16 @@
+Phase: MissingReference
+Input: Token SpaceToken
+Options: control = first
+
+
+Rule: Test1
+Priority: 100
+
+(
+ {Token.string == "Ref"}
+ {Token.string == "."}
+ {SpaceToken}
+ {Token.kind == "number"}
+):match
+-->
+:match.MissingReference = {string = :match.Token.string}
