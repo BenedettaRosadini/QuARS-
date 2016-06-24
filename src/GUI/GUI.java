@@ -973,7 +973,7 @@ public class MyCellRenderer_Completness extends JTextArea implements TableCellRe
   			 {
 	  			 //System.out.println("***"+regular);
 	  			 String []list = regular.split("[<>]");
-			     Table_Clarity_list.addRow(new Object[]{list[3], list[5], list[7], Integer.parseInt(list[9]), Boolean.parseBoolean(list[11])});     		   
+			     Table_Clarity_list.addRow(new Object[]{list[3], list[5].replace(" - ", "\r\n"), list[7].replace(" - ", "\r\n"), Integer.parseInt(list[9]), Boolean.parseBoolean(list[11])});     		   
   			 }
   		  }
   		  regex = "<ClarityList>.*</ClarityList>";
@@ -1006,7 +1006,7 @@ public class MyCellRenderer_Completness extends JTextArea implements TableCellRe
 			 {
 	  			 //System.out.println("***"+regular);
 	  			 String []list = regular.split("[<>]");
-			     Table_Non_Ambiguity_list.addRow(new Object[]{list[3], list[5], list[7], Integer.parseInt(list[9]), Boolean.parseBoolean(list[11])});     		   
+			     Table_Non_Ambiguity_list.addRow(new Object[]{list[3], list[5].replace(" - ", "\r\n"), list[7].replace(" - ", "\r\n"), Integer.parseInt(list[9]), Boolean.parseBoolean(list[11])});     		   
 			 }
 		   }
   		   regex = "<Non_AmbiguityList>.*</Non_AmbiguityList>";
@@ -1038,7 +1038,7 @@ public class MyCellRenderer_Completness extends JTextArea implements TableCellRe
 			 {
 	  			 //System.out.println("***"+regular);
 	  			 String []list = regular.split("[<>]");
-			     Table_General_list.addRow(new Object[]{list[3], list[5], list[7], Integer.parseInt(list[9]), Boolean.parseBoolean(list[11])});     		   
+			     Table_General_list.addRow(new Object[]{list[3], list[5].replace(" - ", "\r\n"), list[7].replace(" - ", "\r\n"), Integer.parseInt(list[9]), Boolean.parseBoolean(list[11])});     		   
 			 }
 		   }
   		   regex = "<GeneralList>.*</GeneralList>";
@@ -1069,7 +1069,7 @@ public class MyCellRenderer_Completness extends JTextArea implements TableCellRe
 			 {
 	  			 //System.out.println("***"+regular);
 	  			 String []list = regular.split("[<>]");
-			     Table_Completness_list.addRow(new Object[]{list[3], list[5], list[7], Integer.parseInt(list[9]), Boolean.parseBoolean(list[11])});     		   
+			     Table_Completness_list.addRow(new Object[]{list[3], list[5].replace(" - ", "\r\n"), list[7].replace(" - ", "\r\n"), Integer.parseInt(list[9]), Boolean.parseBoolean(list[11])});     		   
 			 }
 		   }
   		   regex = "<CompletenessList>.*</CompletenessList>";
@@ -1095,16 +1095,23 @@ public class MyCellRenderer_Completness extends JTextArea implements TableCellRe
 
         public void actionPerformed(ActionEvent e) {
           try {
+        	  String path;
             JFileChooser fileChooser = new JFileChooser();
             fileChooser.setFileFilter(new DocumentFileFilter());
             int n = fileChooser.showSaveDialog(GUI.this);
             if (n == JFileChooser.APPROVE_OPTION) {
               save_file = fileChooser.getSelectedFile();
               System.out.println(save_file.getPath());
-              this.save();
+              if(!save_file.toString().contains(".txt"))
+              {
+            	  path = save_file.toString()+".txt";
+              }else{
+            	  path = save_file.getPath();
+              }
+              this.save(path);
               JFrame f = null;
 			     JOptionPane.showMessageDialog(f,
-			    		   "Save Procedure Successfull: "+save_file.getPath(),
+			    		   "Save Procedure Successfull: "+path,
 			    		   "Save Operation",
 			    		   JOptionPane.INFORMATION_MESSAGE);
               }
@@ -1112,18 +1119,24 @@ public class MyCellRenderer_Completness extends JTextArea implements TableCellRe
         }
         
         
-        public void save()
+        public void save(String path)
         {
 			FileWriter fw;
+			String defect;
+			String explanation;
 			String text_req ;
 			try {
-				fw = new FileWriter(save_file);
+				fw = new FileWriter(path);
 				for (int i = 0; i < Table_Clarity_list.getRowCount(); i++) 
 				{
 					text_req = Table_Clarity_list.getValueAt(i, 0).toString();
 					text_req = text_req.replace(">", "greater than");
 					text_req = text_req.replace("<", "lower than");
-					fw.write("<Clarity><"+ text_req+"><"+Table_Clarity_list.getValueAt(i, 1)+"><"+Table_Clarity_list.getValueAt(i, 2)+"><"+Table_Clarity_list.getValueAt(i, 3)+"><"+Table_Clarity_list.getValueAt(i, 4)+"></Clarity>");
+					defect = "";
+					defect = Table_Clarity_list.getValueAt(i, 1).toString().replace("\r\n", " - ");
+					explanation = "";
+					explanation = Table_Clarity_list.getValueAt(i, 2).toString().replace("\r\n", " - ");
+					fw.write("<Clarity><"+ text_req+"><"+defect+"><"+explanation+"><"+Table_Clarity_list.getValueAt(i, 3)+"><"+Table_Clarity_list.getValueAt(i, 4)+"></Clarity>");
 					fw.write("\r\n");
    	    	    }
 				Iterator <String> itcl = highligth_clarity.iterator();
@@ -1138,7 +1151,11 @@ public class MyCellRenderer_Completness extends JTextArea implements TableCellRe
 					text_req = Table_Completness_list.getValueAt(i, 0).toString();
 					text_req = text_req.replace(">", "greater than");
 					text_req = text_req.replace("<", "lower than");
-					fw.write( "<Completeness><"+text_req+"><"+Table_Completness_list.getValueAt(i, 1)+"><"+Table_Completness_list.getValueAt(i, 2)+"><"+Table_Completness_list.getValueAt(i, 3)+"><"+Table_Completness_list.getValueAt(i, 4)+"></Completeness>");
+					defect = "";
+					defect = Table_Completness_list.getValueAt(i, 1).toString().replace("\r\n", " - ");
+					explanation = "";
+					explanation = Table_Completness_list.getValueAt(i, 2).toString().replace("\r\n", " - ");
+					fw.write( "<Completeness><"+text_req+"><"+defect+"><"+explanation+"><"+Table_Completness_list.getValueAt(i, 3)+"><"+Table_Completness_list.getValueAt(i, 4)+"></Completeness>");
 					fw.write("\r\n");
    	    	    }
 				Iterator <String> itco = highligth_completeness.iterator();
@@ -1153,7 +1170,11 @@ public class MyCellRenderer_Completness extends JTextArea implements TableCellRe
 					text_req = Table_Non_Ambiguity_list.getValueAt(i, 0).toString();
 					text_req = text_req.replace(">", "greater than");
 					text_req = text_req.replace("<", "lower than");
-					fw.write("<NonAmbiguity><"+ text_req+"><"+Table_Non_Ambiguity_list.getValueAt(i, 1)+"><"+Table_Non_Ambiguity_list.getValueAt(i, 2)+"><"+Table_Non_Ambiguity_list.getValueAt(i, 3)+"><"+Table_Non_Ambiguity_list.getValueAt(i, 4)+"></NonAmbiguity>");
+					defect = "";
+					defect = Table_Non_Ambiguity_list.getValueAt(i, 1).toString().replace("\r\n", " - ");
+					explanation = "";
+					explanation = Table_Non_Ambiguity_list.getValueAt(i, 2).toString().replace("\r\n", " - ");
+					fw.write("<NonAmbiguity><"+ text_req+"><"+defect+"><"+explanation+"><"+Table_Non_Ambiguity_list.getValueAt(i, 3)+"><"+Table_Non_Ambiguity_list.getValueAt(i, 4)+"></NonAmbiguity>");
 					fw.write("\r\n");
    	    	    }
 				Iterator <String> itna = highligth_nonambiguity.iterator();
@@ -1168,7 +1189,11 @@ public class MyCellRenderer_Completness extends JTextArea implements TableCellRe
 					text_req = Table_General_list.getValueAt(i, 0).toString();
 					text_req = text_req.replace(">", "greater than");
 					text_req = text_req.replace("<", "lower than");
-					fw.write("<General><"+ text_req+"><"+Table_General_list.getValueAt(i, 1)+"><"+Table_General_list.getValueAt(i, 2)+"><"+Table_General_list.getValueAt(i, 3)+"><"+Table_General_list.getValueAt(i, 4)+"></General>");
+					defect = "";
+					defect = Table_General_list.getValueAt(i, 1).toString().replace("\r\n", " - ");
+					explanation = "";
+					explanation = Table_General_list.getValueAt(i, 2).toString().replace("\r\n", " - ");
+					fw.write("<General><"+ text_req+"><"+defect+"><"+explanation+"><"+Table_General_list.getValueAt(i, 3)+"><"+Table_General_list.getValueAt(i, 4)+"></General>");
 					fw.write("\r\n");
    	    	    }
 				Iterator <String> itge = highligth_general.iterator();
@@ -1266,7 +1291,7 @@ public class MyCellRenderer_Completness extends JTextArea implements TableCellRe
         
 
         public String getDescription() {
-          return "Requirements Document";
+          return ".docx, .xlsx, .doc, .txt";
         }
 
 
