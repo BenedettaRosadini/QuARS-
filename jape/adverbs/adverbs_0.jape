@@ -1,6 +1,6 @@
 Phase: NP
 Input: Token 
-Options: control = All
+Options: control = appelt
  
 Rule: Adverbs
 Priority: 5
