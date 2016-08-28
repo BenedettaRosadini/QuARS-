@@ -1,6 +1,6 @@
 Phase: MatchingStyles
 Input: Lookup
-Options: control = first
+Options: control = appelt
 
 
 Rule: Test1

@@ -1,6 +1,6 @@
 Phase: False
 Input: Split underscore Vagueness
-Options: control = first
+Options: control = appelt
 
  
 Rule: CoordAmbiguity

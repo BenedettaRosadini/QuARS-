@@ -1,6 +1,6 @@
 Phase: underscore
 Input: Token
-Options: control = first
+Options: control = appelt
 
 
 Rule: Test1
